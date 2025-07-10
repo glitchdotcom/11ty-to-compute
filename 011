@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Evlenelim mi? 💍</title>
+  <style>
+    body {
+      text-align: center;
+      background-color: #fff0f5;
+      font-family: 'Segoe UI', sans-serif;
+      padding-top: 100px;
+    }
+    h1 {
+      font-size: 36px;
+      color: #d63384;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #yes {
+      background-color: #28a745;
+      color: white;
+    }
+    #no {
+      background-color: #dc3545;
+      color: white;
+    }
+    #finalMessage {
+      display: none;
+      font-size: 30px;
+      color: #ff1493;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Benimle evlenir misin? 💖</h1>
+  <button id="yes">Evet</button>
+  <button id="no">Hayır</button>
+
+  <div id="finalMessage">🎉 Sadece EVET seçeneği kaldı! Kabul ediyorsun 😍</div>
+
+  <script>
+    let noBtn = document.getElementById("no");
+    let yesBtn = document.getElementById("yes");
+    let clickCount = 0;
+
+    noBtn.onclick = function() {
+      clickCount++;
+      if (clickCount < 10) {
+        // Rastgele pozisyon değiştir
+        noBtn.style.position = "absolute";
+        noBtn.style.left = Math.random() * (window.innerWidth - 100) + "px";
+        noBtn.style.top = Math.random() * (window.innerHeight - 50) + "px";
+      } else {
+        noBtn.style.display = "none";
+        document.getElementById("finalMessage").style.display = "block";
+      }
+    };
+
+    yesBtn.onclick = function() {
+      alert("Yaaa 😍 EVET dedi!! Mutluluğumuz sonsuz olsun 💍💘");
+    };
+  </script>
+
+</body>
+</html>
