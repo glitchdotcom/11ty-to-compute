@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Te Amo 💖</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #qr-container {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: white;
+      padding: 5px;
+      border-radius: 10px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="backgroundCanvas"></canvas>
+  <canvas id="heartCanvas"></canvas>
+
+  <!-- Contenedor del QR -->
+  <div id="qr-container">
+    <img id="qr" src="" alt="QR para compartir" width="100" />
+  </div>
+
+  <script>
+    // Canvases
+    const backgroundCanvas = document.getElementById('backgroundCanvas');
+    const heartCanvas = document.getElementById('heartCanvas');
+    const bctx = backgroundCanvas.getContext('2d');
+    const ctx = heartCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      backgroundCanvas.width = window.innerWidth;
+      backgroundCanvas.height = window.innerHeight;
+      heartCanvas.width = window.innerWidth;
+      heartCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Partículas corazón
+    function heartFunction(t) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      return { x, y };
+    }
+
+    const particles = [];
+    for (let i = 0; i < 300; i++) {
+      const t = Math.PI * 2 * Math.random();
+      const pos = heartFunction(t);
+      particles.push({
+        x: pos.x,
+        y: pos.y,
+        size: Math.random() * 2 + 1,
+        speed: Math.random() * 0.5 + 0.5,
+        angle: t
+      });
+    }
+
+    function drawHeartParticles() {
+      ctx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
+      const centerX = heartCanvas.width / 2;
+      const centerY = heartCanvas.height / 2;
+      ctx.fillStyle = 'pink';
+      particles.forEach(p => {
+        const pos = heartFunction(p.angle);
+        const x = centerX + pos.x * 15;
+        const y = centerY - pos.y * 15;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Texto "Te amo"
+      ctx.font = "bold 40px Arial";
+      ctx.fillStyle = "white";
+      ctx.fillText("Te amo 💖", centerX - 70, centerY);
+    }
+
+    function animate() {
+      drawHeartParticles();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Generar QR con link a la página actual
+    const qrImg = document.getElementById("qr");
+    const currentURL = window.location.href;
+    const encodedURL = encodeURIComponent(currentURL);
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodedURL}`;
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Te Amo 💖</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #qr-container {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: white;
+      padding: 5px;
+      border-radius: 10px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="backgroundCanvas"></canvas>
+  <canvas id="heartCanvas"></canvas>
+
+  <!-- Contenedor del QR -->
+  <div id="qr-container">
+    <img id="qr" src="" alt="QR para compartir" width="100" />
+  </div>
+
+  <script>
+    // Canvases
+    const backgroundCanvas = document.getElementById('backgroundCanvas');
+    const heartCanvas = document.getElementById('heartCanvas');
+    const bctx = backgroundCanvas.getContext('2d');
+    const ctx = heartCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      backgroundCanvas.width = window.innerWidth;
+      backgroundCanvas.height = window.innerHeight;
+      heartCanvas.width = window.innerWidth;
+      heartCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Partículas corazón
+    function heartFunction(t) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      return { x, y };
+    }
+
+    const particles = [];
+    for (let i = 0; i < 300; i++) {
+      const t = Math.PI * 2 * Math.random();
+      const pos = heartFunction(t);
+      particles.push({
+        x: pos.x,
+        y: pos.y,
+        size: Math.random() * 2 + 1,
+        speed: Math.random() * 0.5 + 0.5,
+        angle: t
+      });
+    }
+
+    function drawHeartParticles() {
+      ctx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
+      const centerX = heartCanvas.width / 2;
+      const centerY = heartCanvas.height / 2;
+      ctx.fillStyle = 'pink';
+      particles.forEach(p => {
+        const pos = heartFunction(p.angle);
+        const x = centerX + pos.x * 15;
+        const y = centerY - pos.y * 15;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Texto "Te amo"
+      ctx.font = "bold 40px Arial";
+      ctx.fillStyle = "white";
+      ctx.fillText("Te amo 💖", centerX - 70, centerY);
+    }
+
+    function animate() {
+      drawHeartParticles();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Generar QR con link a la página actual
+    const qrImg = document.getElementById("qr");
+    const currentURL = window.location.href;
+    const encodedURL = encodeURIComponent(currentURL);
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodedURL}`;
+  </script>
+</body>
+</html>
