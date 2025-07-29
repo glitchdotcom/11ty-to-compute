@@ -1,0 +1,158 @@
+// File: app/page.tsx
+"use client";
+
+import Image from "next/image";
+import { useState, useRef } from "react";
+import dynamic from "next/dynamic";
+import html2canvas from "html2canvas";
+
+const jsPDF = dynamic(() => import("jspdf"), { ssr: false });
+
+function timeToSeconds(time: string): number {
+  if (!time || !time.includes(":")) return 0;
+  const parts = time.split(":");
+  const minutes = parseInt(parts[0] || "0", 10);
+  const seconds = parseFloat(parts[1] || "0");
+  return minutes * 60 + seconds;
+}
+
+function secondsToTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = (seconds % 60).toFixed(2).padStart(5, "0");
+  return `${minutes}:${remainingSeconds}`;
+}
+
+export default function Home() {
+  const [name, setName] = useState("");
+  const [css400, setCss400] = useState("");
+  const [css200, setCss200] = useState("");
+  const [t2000, setT2000] = useState("");
+  const [results, setResults] = useState<any>(null);
+  const resultRef = useRef(null);
+
+  function calculateResults() {
+    if (!css400 || !css200 || !t2000) return;
+    const t400 = timeToSeconds(css400);
+    const t200 = timeToSeconds(css200);
+    const pace = (t400 - t200) / 2;
+    const t2k = timeToSeconds(t2000);
+
+    const calc = (factor: number) => secondsToTime(pace * factor);
+    const zone = (percent: number) => secondsToTime((t2k / 20) * percent);
+
+    setResults({
+      cssPace: secondsToTime(pace),
+      easy: calc(1.20),
+      steady: calc(1.10),
+      moderate: calc(1.00),
+      hard: calc(0.95),
+      veryHard: calc(0.90),
+      zoneN1: zone(1.10),
+      zoneN2: zone(1.00),
+      zoneN3: zone(0.95),
+      zoneAT: zone(0.90),
+    });
+  }
+
+  function exportAsPDF() {
+    if (!resultRef.current) return;
+    html2canvas(resultRef.current).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      import("jspdf").then(({ default: jsPDF }) => {
+        const pdf = new jsPDF();
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("swim-target.pdf");
+      });
+    });
+  }
+
+  function exportAsJPG() {
+    if (!resultRef.current) return;
+    html2canvas(resultRef.current).then((canvas) => {
+      const link = document.createElement("a");
+      link.download = "swim-target.jpg";
+      link.href = canvas.toDataURL("image/jpeg");
+      link.click();
+    });
+  }
+
+  return (
+    <main className="p-4 max-w-xl mx-auto">
+      <div className="text-center mb-4">
+        <Image
+          src="/Spectra swimpro logo.png"
+          alt="Spectra Swimpro Logo"
+          width={150}
+          height={150}
+        />
+        <h1 className="text-2xl font-bold mt-2">OPTIMUS PRIME SWIM TARGET</h1>
+      </div>
+
+      <div className="space-y-2">
+        <input
+          type="text"
+          placeholder="Nama Atlet"
+          className="w-full p-2 border rounded"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Hasil CSS 400m (misal: 5:30)"
+          className="w-full p-2 border rounded"
+          value={css400}
+          onChange={(e) => setCss400(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Hasil CSS 200m (misal: 2:40)"
+          className="w-full p-2 border rounded"
+          value={css200}
+          onChange={(e) => setCss200(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Hasil T-2000m (misal: 30:00)"
+          className="w-full p-2 border rounded"
+          value={t2000}
+          onChange={(e) => setT2000(e.target.value)}
+        />
+        <button
+          onClick={calculateResults}
+          className="bg-blue-600 text-white w-full py-2 rounded"
+        >
+          TARGET TIME
+        </button>
+      </div>
+
+      {results && (
+        <div ref={resultRef} className="bg-gray-100 p-4 mt-4 rounded">
+          <h2 className="text-lg font-bold mb-2">Target {name}</h2>
+          <p>CSS Pace: {results.cssPace}</p>
+          <p>Easy: {results.easy}</p>
+          <p>Steady: {results.steady}</p>
+          <p>Moderate: {results.moderate}</p>
+          <p>Hard: {results.hard}</p>
+          <p>Very Hard: {results.veryHard}</p>
+          <hr className="my-2" />
+          <p>Zone N1: {results.zoneN1}</p>
+          <p>Zone N2: {results.zoneN2}</p>
+          <p>Zone N3: {results.zoneN3}</p>
+          <p>Zone AT: {results.zoneAT}</p>
+
+          <div className="flex gap-2 mt-4">
+            <button onClick={exportAsPDF} className="bg-red-500 text-white px-4 py-1 rounded">
+              Export PDF
+            </button>
+            <button onClick={exportAsJPG} className="bg-green-500 text-white px-4 py-1 rounded">
+              Export JPG
+            </button>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
