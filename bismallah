@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memory Fadington</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>🕊️ Memory Fadington 🔥</h1>
+    <p class="tagline">Where angels forget, and devils remember.</p>
+    <p class="contact">✉️ memoryfadington620@gmail.com</p>
+  </header>
+
+  <section class="products">
+    <div class="product dark">
+      <h2>Tren Ace – <span>"Fallen Spark"</span></h2>
+      <p>Fast-acting. Intense. Devil-aligned.</p>
+      <p><em>“Burn through limits — quick, ruthless, effective.”</em></p>
+    </div>
+
+    <div class="product dual">
+      <h2>Tren E – <span>"Eternal Ghost"</span></h2>
+      <p>Slow-acting. Mysterious. Angel/Devil duality.</p>
+      <p><em>“Invisible power moving slowly like a lost cathedral bell.”</em></p>
+    </div>
+
+    <div class="product light">
+      <h2>Test E – <span>"Grace Synth"</span></h2>
+      <p>Stable, smooth, and angelic.</p>
+      <p><em>“The breath of strength, calm and building.”</em></p>
+    </div>
+
+    <div class="product dark">
+      <h2>Test Cyp – <span>"Serpent Crown"</span></h2>
+      <p>Bolder edge. Devil-coded power.</p>
+      <p><em>“Royal blood through shadowed veins.”</em></p>
+    </div>
+  </section>
+
+  <footer>
+    <p>🕯️ Private ritual access by request.</p>
+    <p>© 2025 Memory Fadington</p>
+  </footer>
+</body>
+</html>
+
+body {
+  background: linear-gradient(to bottom, #000000, #1a1a1a);
+  color: #ffffff;
+  font-family: 'Georgia', serif;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  text-align: center;
+  padding: 40px 20px;
+  border-bottom: 1px solid #444;
+}
+
+h1 {
+  font-size: 3em;
+  color: #f0f0f0;
+  letter-spacing: 2px;
+}
+
+.tagline {
+  font-style: italic;
+  color: #ccc;
+  margin-top: 10px;
+}
+
+.contact {
+  color: #aaa;
+  margin-top: 5px;
+}
+
+.products {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.product {
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background-color: #111;
+  transition: 0.3s;
+}
+
+.product span {
+  color: #999;
+  font-style: italic;
+}
+
+.product.light {
+  background-color: #f4f4f4;
+  color: #111;
+}
+
+.product.dual {
+  background: linear-gradient(to right, #ffffff 50%, #000000 50%);
+  color: #ccc;
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+  padding: 30px;
+  border-top: 1px solid #444;
+  color: #666;
+  font-size: 0.9em;
+}
