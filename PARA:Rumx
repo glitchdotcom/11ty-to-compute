@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Feliz Día de la Amistad</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d0d0d;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-image: url('https://i.imgur.com/dxjAxij.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 30px 20px;
+      border-radius: 20px;
+      max-width: 600px;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin: 0 0 10px 0;
+      color: #ffb6c1;
+    }
+
+    h2 {
+      margin: 0 0 20px 0;
+      color: #ff69b4;
+    }
+
+    p {
+      font-size: 1.1em;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .signature {
+      margin-top: 30px;
+      font-style: italic;
+      color: #ffd1dc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Feliz Día de la Amistad</h1>
+    <h2>1 de Agosto</h2>
+    <p><strong>Ramo</strong></p>
+    <p>Hoy no es un día cualquiera... Es el Día de la Novia 💐. Pero para mí, también es el día perfecto para celebrar a alguien que vale mucho: tú, mi amiga Rumx.</p>
+    <p>No somos novios, pero nuestra amistad es tan especial que merece ser celebrada. Como en los mejores animes o doramas, tú eres ese personaje que siempre ilumina la historia con su ternura, su locura linda y su forma única de ser.</p>
+    <p>Gracias por estar, por los momentos compartidos y por ser tú. Este detalle es mi forma de decirte: te valoro un montón y me alegra tenerte en mi historia 🌠.</p>
+    <p><strong>❤️ Haz clic, Rumx</strong></p>
+    <div class="signature">
+      Con mucho cariño,<br>
+      Tu amigo que te estima de corazón 💖
+    </div>
+    <p style="margin-top: 20px;">En este día especial, quiero que sepas...<br><strong>Eres una amiga que ilumina mi vida como el rosa en esta oscuridad</strong></p>
+    <p>Para ti, Rumx, con cariño</p>
+  </div>
+</body>
+</html>
