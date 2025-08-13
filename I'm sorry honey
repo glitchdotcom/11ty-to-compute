@@ -1,0 +1,351 @@
+<!DOCTYPE html><html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hey, amor — hablemos 💛</title>
+  <style>
+    :root{
+      --bg:#0f1221;--card:#181c36;--muted:#9aa5ff;--text:#e8ebff;--accent:#ffd166;--good:#7bd389;--bad:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,sans-serif;
+      background:radial-gradient(1200px 800px at 20% -10%,#1a1f3f 0%,transparent 60%),
+                 radial-gradient(1000px 700px at 120% 10%,#2a2550 0%,transparent 60%),
+                 var(--bg);
+      color:var(--text);
+      display:flex;align-items:center;justify-content:center;padding:24px;
+    }
+    .wrap{max-width:940px;width:100%;}
+    .hero{background:linear-gradient(135deg,#1e2244,rgba(30,34,68,.6));border:1px solid #2b3166;padding:28px;border-radius:24px;box-shadow:0 20px 50px rgba(0,0,0,.35);position:relative;overflow:hidden}
+    .hero h1{margin:0;font-size:clamp(28px,5vw,44px);letter-spacing:.3px}
+    .hero p{opacity:.9;margin:.5rem 0 0}
+    .heart{position:absolute;right:24px;top:24px;width:42px;height:42px;background:var(--accent);transform:rotate(45deg);animation:beat 1.6s infinite;box-shadow:0 0 0 0 rgba(255,209,102,.6)}
+    .heart:before,.heart:after{content:"";position:absolute;width:42px;height:42px;background:var(--accent);border-radius:50%}
+    .heart:before{left:-21px}
+    .heart:after{top:-21px}
+    @keyframes beat{0%,100%{transform:rotate(45deg) scale(1)}50%{transform:rotate(45deg) scale(1.12)}}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+.card{background:var(--card);border:1px solid #2b3166;border-radius:20px;padding:18px}
+.card h3{margin:.2rem 0 .8rem;font-size:1.05rem;color:var(--muted)}
+button, .btn{background:linear-gradient(135deg,#2a2f63,#303777);color:var(--text);border:1px solid #3a428f;border-radius:14px;padding:10px 14px;font-weight:600;cursor:pointer;transition:.2s;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+button:hover,.btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+button:active{transform:translateY(0)}
+input[type="range"]{width:100%}
+textarea,input,select{width:100%;background:#121632;color:var(--text);border:1px solid #2b3166;border-radius:12px;padding:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:6px;background:#1a204c;border:1px solid #2b3166;padding:6px 10px;border-radius:999px;font-size:.85rem}
+.tag i{width:8px;height:8px;border-radius:50%}
+.ok{background:var(--good)}
+.bad{background:var(--bad)}
+.muted{opacity:.75}
+.small{font-size:.9rem}
+.coupon{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 10px,rgba(255,255,255,.0) 10px 20px),#14183a;border:1px dashed #556; padding:14px;border-radius:16px}
+.chip{font-weight:700;background:#0f1330;border:1px solid #2b3166;padding:6px 10px;border-radius:12px}
+.breath{height:180px;border-radius:16px;background:conic-gradient(from 0deg at 50% 50%, #2a2f63, #303777,#2a2f63);display:grid;place-items:center;position:relative;overflow:hidden}
+.breath .dot{width:14px;height:14px;border-radius:50%;background:var(--accent);position:absolute;animation:orbit 8s linear infinite}
+.breath h2{margin:0}
+@keyframes orbit{0%{transform:rotate(0deg) translateX(78px)}100%{transform:rotate(360deg) translateX(78px)}}
+.timer{font-variant-numeric:tabular-nums;font-size:1.6rem}
+.divider{height:1px;background:#2b3166;margin:14px 0}
+.switch{display:inline-flex;align-items:center;gap:10px}
+.switch input{appearance:none;width:44px;height:26px;border-radius:999px;background:#333;position:relative;outline:none;border:1px solid #555}
+.switch input:checked{background:#223}
+.switch input::after{content:"";position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#bbb;transition:.2s}
+.switch input:checked::after{transform:translateX(18px);background:var(--accent)}
+.footer{opacity:.7;text-align:center;margin-top:10px;font-size:.85rem}
+.confetti{position:fixed;inset:0;pointer-events:none}
+
+  </style>
+</head>
+<body>
+  <canvas class="confetti"></canvas>
+  <div class="wrap">
+    <section class="hero">
+      <div class="heart" aria-hidden="true"></div>
+      <h1>Oye, amor… ¿podemos reparar esto juntxs? 🫶</h1>
+      <p class="small muted">Prometo escucharte de verdad. Aquí tienes herramientas para que nos calmemos, hablemos y salgamos más fuertes.</p>
+    </section><div class="grid">
+  <!-- Estado y temperatura emocional -->
+  <div class="card">
+    <h3>Temperatura emocional</h3>
+    <div class="row" style="align-items:center">
+      <span class="tag"><i class="bad"></i> Molestia</span>
+      <span class="tag"><i class="ok"></i> Calma</span>
+    </div>
+    <input id="mood" type="range" min="0" max="100" value="65" />
+    <p class="muted small" id="moodLabel">Ahora: tenso pero con ganas de arreglarlo.</p>
+    <div class="row">
+      <button id="btnConfetti">Mini celebración al avanzar ✨</button>
+      <button id="btnHug">Abrazito virtual 🤗</button>
+    </div>
+  </div>
+
+  <!-- Timer de enfriamiento -->
+  <div class="card">
+    <h3>Timer de enfriamiento</h3>
+    <p class="small muted">A veces 5 minutos ayudan a no decir cosas hirientes.</p>
+    <div class="row">
+      <button data-min="3">3 min</button>
+      <button data-min="5">5 min</button>
+      <button data-min="10">10 min</button>
+    </div>
+    <div class="divider"></div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+
+  <!-- Respiración guiada -->
+  <div class="card">
+    <h3>Respiremos juntxs</h3>
+    <div class="breath" id="breath">
+      <div class="dot" aria-hidden="true"></div>
+      <h2 id="breathStep">Inhala 4</h2>
+    </div>
+    <p class="small muted">Ciclo 4–7–8: Inhala 4s → Sostén 7s → Exhala 8s.</p>
+    <div class="row">
+      <button id="breathStart">Iniciar</button>
+      <button id="breathStop">Detener</button>
+    </div>
+  </div>
+
+  <!-- Motivo y disculpa -->
+  <div class="card">
+    <h3>Quiero disculparme por…</h3>
+    <select id="reason">
+      <option value="reaccioné mal y subí la voz">haber reaccionado mal y subir la voz</option>
+      <option value="llegué tarde sin avisar">llegar tarde y no avisar</option>
+      <option value="te ignoré cuando necesitabas apoyo">haberte ignorado cuando necesitabas apoyo</option>
+      <option value="un chiste fuera de lugar">hacer un chiste fuera de lugar</option>
+      <option value="no respeté un límite">no respetar un límite que me dijiste</option>
+    </select>
+    <textarea id="apology" rows="5" placeholder="Escribe aquí lo que entiendes, cómo te harás responsable y qué harás distinto."></textarea>
+    <div class="row">
+      <button id="btnPlantilla">Usar plantilla sincera 📝</button>
+      <button id="btnGuardar">Guardar en nuestro registro ❤️‍🩹</button>
+    </div>
+    <p class="small muted" id="saveMsg"></p>
+  </div>
+
+  <!-- Acuerdos -->
+  <div class="card">
+    <h3>Nuestros acuerdos</h3>
+    <label class="small"><input type="checkbox" class="chk" data-text="No interrumpirnos cuando el otro habla"> No interrumpirnos cuando el otro habla</label><br>
+    <label class="small"><input type="checkbox" class="chk" data-text="Pedir tiempo si estamos muy calientes"> Pedir tiempo si estamos muy calientes</label><br>
+    <label class="small"><input type="checkbox" class="chk" data-text="No usar insultos ni comparaciones"> No usar insultos ni comparaciones</label><br>
+    <label class="small"><input type="checkbox" class="chk" data-text="Preguntar: ¿Qué necesitas de mí ahora?"> Preguntar: “¿Qué necesitas de mí ahora?”</label>
+    <div class="divider"></div>
+    <button id="btnAcuerdos">Guardar acuerdos</button>
+    <p class="small muted" id="agreementsMsg"></p>
+  </div>
+
+  <!-- Cupones de cariño -->
+  <div class="card">
+    <h3>Cupones de cariño</h3>
+    <div class="coupon">
+      <div>
+        <div class="small muted">Cupón #<span id="couponId">001</span></div>
+        <div style="font-size:1.1rem;font-weight:700" id="couponText">1 hora de mimos + tu snack favorito</div>
+      </div>
+      <span class="chip" id="couponTag">Válido hoy</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnNewCoupon">Nuevo cupón 🎟️</button>
+      <button id="btnCopyCoupon">Copiar texto</button>
+    </div>
+    <p class="small muted" id="couponMsg"></p>
+  </div>
+
+  <!-- Modo calma -->
+  <div class="card">
+    <h3>Modo calma</h3>
+    <div class="switch">
+      <label class="small muted">Luces bajas & tip suave</label>
+      <input id="calmToggle" type="checkbox" />
+    </div>
+    <div class="divider"></div>
+    <label class="small">Tip del día</label>
+    <p id="tip" class="small muted">Cuando te hable, mírame a los ojos y parafrasea: “Lo que te escucho decir es…”</p>
+  </div>
+
+  <!-- Registro -->
+  <div class="card">
+    <h3>Registro de conversaciones</h3>
+    <div id="log" class="small muted">Aún no hay registros.</div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnExport">Exportar .txt</button>
+      <button id="btnClear">Borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<p class="footer">Hecho con paciencia, amor y responsabilidad. 💙</p>
+
+  </div>  <script>
+    // Utilidades
+    const $=s=>document.querySelector(s);
+    const $$=s=>Array.from(document.querySelectorAll(s));
+    const store={get:(k,def)=>{try{return JSON.parse(localStorage.getItem(k))??def}catch{ return def}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+
+    // Confetti simple
+    const confettiCanvas=$('.confetti');
+    const ctx=confettiCanvas.getContext('2d');
+    let confettiPieces=[]; let confettiAnim;
+    function resize(){confettiCanvas.width=innerWidth;confettiCanvas.height=innerHeight}
+    addEventListener('resize',resize); resize();
+    function shootConfetti(){
+      for(let i=0;i<120;i++){
+        confettiPieces.push({x:Math.random()*innerWidth,y:-10,vy:2+Math.random()*3,l:4+Math.random()*8,w:1+Math.random()*3,rot:Math.random()*Math.PI});
+      }
+      if(!confettiAnim){confettiAnim=requestAnimationFrame(step)}
+    }
+    function step(){
+      ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+      confettiPieces.forEach(p=>{
+        p.y+=p.vy; p.rot+=0.1;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle=`hsl(${(p.y/5)%360} 90% 65%)`;
+        ctx.fillRect(-p.w/2,-p.l/2,p.w,p.l); ctx.restore();
+      });
+      confettiPieces=confettiPieces.filter(p=>p.y<innerHeight+20);
+      if(confettiPieces.length>0){confettiAnim=requestAnimationFrame(step)} else {confettiAnim=null}
+    }
+
+    // Mood slider
+    const mood=$('#mood'), moodLabel=$('#moodLabel');
+    function setMood(v){
+      let t='';
+      if(v<25) t='En calma. Gracias por estar aquí.';
+      else if(v<50) t='Tensx, pero escuchándonos.';
+      else if(v<75) t='Molestia alta. Tomemos un respiro.';
+      else t='Al borde. Pausa y volvemos.';
+      moodLabel.textContent='Ahora: '+t;
+    }
+    mood.addEventListener('input',e=>setMood(+e.target.value)); setMood(+mood.value);
+
+    // Abrazito virtual
+    $('#btnHug').addEventListener('click',()=>{
+      alert('🤗 *abrazo largo y apretadito* Te quiero. Gracias por hablarlo conmigo.');
+    });
+
+    // Confetti button
+    $('#btnConfetti').addEventListener('click',shootConfetti);
+
+    // Timer de enfriamiento
+    const timerEl=$('#timer'); let timerInt=null; let secs=0;
+    $$('.card button[data-min]').forEach(b=>b.addEventListener('click',()=>{
+      secs=+b.dataset.min*60; clearInterval(timerInt);
+      timerInt=setInterval(()=>{secs--; if(secs<=0){clearInterval(timerInt);shootConfetti();}
+        const m=String(Math.floor(secs/60)).padStart(2,'0');
+        const s=String(secs%60).padStart(2,'0'); timerEl.textContent=`${m}:${s}`;
+      },1000);
+    }));
+
+    // Respiración 4-7-8
+    let breathInt=null; let phase=0; // 0 inhale 4, 1 hold 7, 2 exhale 8
+    const breathStep=$('#breathStep');
+    function startBreath(){
+      clearInterval(breathInt); phase=0; let t=4; breathStep.textContent='Inhala 4';
+      breathInt=setInterval(()=>{
+        t--; if(t<=0){
+          if(phase===0){phase=1; t=7; breathStep.textContent='Sostén 7'}
+          else if(phase===1){phase=2; t=8; breathStep.textContent='Exhala 8'}
+          else{phase=0; t=4; breathStep.textContent='Inhala 4'}
+        }
+      },1000);
+    }
+    $('#breathStart').addEventListener('click',startBreath);
+    $('#breathStop').addEventListener('click',()=>clearInterval(breathInt));
+
+    // Plantilla de disculpa
+    $('#btnPlantilla').addEventListener('click',()=>{
+      const r=$('#reason').value;
+      const text=`Amor, quiero disculparme por ${r}. Entiendo que eso te hizo sentir mal y asumí responsabilidad. A partir de ahora haré esto distinto: [especificar acción]. ¿Qué necesitas de mí en este momento? Estoy aquí para escucharte.`;
+      $('#apology').value=text;
+    });
+
+    // Guardar disculpa
+    function renderLog(){
+      const logs=store.get('logs',[]);
+      if(!logs.length){$('#log').textContent='Aún no hay registros.'; return}
+      $('#log').innerHTML=logs.map((l,i)=>`<div style="margin-bottom:10px">
+        <div class="small muted">${new Date(l.date).toLocaleString()}</div>
+        <div style="white-space:pre-wrap">${l.text}</div>
+      </div>`).join('');
+    }
+    renderLog();
+
+    $('#btnGuardar').addEventListener('click',()=>{
+      const text=$('#apology').value.trim();
+      if(!text){$('#saveMsg').textContent='Escribe algo con cariño y honestidad.'; return}
+      const logs=store.get('logs',[]);
+      logs.unshift({date:Date.now(),text});
+      store.set('logs',logs);
+      $('#saveMsg').textContent='Guardado en el registro.'; renderLog(); shootConfetti();
+    });
+
+    // Acuerdos
+    $('#btnAcuerdos').addEventListener('click',()=>{
+      const items=$$('.chk').filter(c=>c.checked).map(c=>c.dataset.text);
+      store.set('agreements',items);
+      $('#agreementsMsg').textContent='Acuerdos actualizados ('+items.length+').';
+    });
+    (function loadAgreements(){
+      const a=store.get('agreements',[]);
+      $$('.chk').forEach(c=>{if(a.includes(c.dataset.text)) c.checked=true});
+    })();
+
+    // Cupones
+    const ideas=[
+      '1 hora de mimos + tu snack favorito',
+      'Paseo nocturno agarrados de la mano',
+      'Te escucho sin interrumpir (30 min)',
+      'Cita casera con peli que tú elijas',
+      'Desayuno en la cama',
+      'Masajito de 10 minutos',
+      'Carta escrita a mano',
+      'Bailar nuestra canción completa',
+      'Lavar los platos hoy yo',
+      'Plan sorpresa este fin'
+    ];
+    let couponCount=store.get('couponCount',1);
+    function newCoupon(){
+      const pick=ideas[Math.floor(Math.random()*ideas.length)];
+      $('#couponText').textContent=pick;
+      $('#couponId').textContent=String(++couponCount).padStart(3,'0');
+      $('#couponTag').textContent='Válido hoy';
+      store.set('couponCount',couponCount);
+    }
+    $('#btnNewCoupon').addEventListener('click',newCoupon);
+    $('#btnCopyCoupon').addEventListener('click',()=>{
+      const txt=`Cupón #${$('#couponId').textContent}: ${$('#couponText').textContent} — ${$('#couponTag').textContent}`;
+      navigator.clipboard.writeText(txt).then(()=>$('#couponMsg').textContent='Copiado ✅');
+    });
+
+    // Modo calma + tip aleatorio
+    const tips=[
+      'Evitemos “siempre” y “nunca”. Hablemos de esta vez.',
+      'Haz preguntas abiertas: ¿Qué te dolió de lo que pasó?',
+      'Di cómo te sientes, no quién tiene la culpa.',
+      'Si sube la voz, bajemos el volumen en respuesta.',
+      'Validemos antes de responder: “Entiendo por qué te sentiste así”.'
+    ];
+    function randomTip(){ $('#tip').textContent=tips[Math.floor(Math.random()*tips.length)] }
+    randomTip();
+    $('#calmToggle').addEventListener('change',e=>{
+      document.body.style.filter=e.target.checked?'saturate(0.8) brightness(0.95)':'none';
+      randomTip();
+    });
+
+    // Exportar / borrar
+    $('#btnExport').addEventListener('click',()=>{
+      const logs=store.get('logs',[]);
+      const text=logs.map(l=>`[${new Date(l.date).toLocaleString()}]\n${l.text}\n`).join('\n---\n');
+      const blob=new Blob([text||'Sin registros'],{type:'text/plain'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='registro_conversaciones.txt'; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    $('#btnClear').addEventListener('click',()=>{
+      if(confirm('¿Seguro que deseas borrar todo el registro?')){store.set('logs',[]); renderLog();}
+    });
+  </script></body>
+</html>
