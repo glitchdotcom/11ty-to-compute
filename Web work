@@ -1,0 +1,28 @@
+here```javascript
+const express = require("express");
+const app = express();
+app.use(express.urlencoded({ extended: false }));
+
+app.post("/", (req, res) => {
+  const msg = req.body.Body.toLowerCase();
+  let reply = "I didn't understand that.";
+
+  if (msg.includes("hi")) reply = "Hey! Welcome to my bot 😎";
+  if (msg.includes("joke")) reply = "Why did the tomato blush? Because it saw the salad dressing 😂";
+  if (msg.includes("help")) reply = "Try saying: hi, joke, or help.";
+
+  res.set("Content-Type", "text/xml");
+  res.send(`<Response><Message>${reply}</Message></Response>`);
+});
+
+app.listen(process.env.PORT, () => {
+  console.log("Bot is live!");
+});
+```
+
+*4. Copy Your Webhook URL*
+- Click *“Share” > “Live App”*
+- Copy the *link*, e.g., `https://your-bot.glitch.me/`
+
+*5. Paste the Link in Twilio*
+- Go to *Twilio Console > Sandbox > Settings*
