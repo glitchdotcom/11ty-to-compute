@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benestarfitnes</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  /* ===== Estilos generales ===== */
+  * {margin:0; padding:0; box-sizing:border-box;}
+  body {font-family: 'Roboto', sans-serif; background:#f9f9f9; color:#333; scroll-behavior:smooth;}
+  header {background: linear-gradient(90deg, #1abc9c, #16a085); color:#fff; padding:20px 0; text-align:center; position:sticky; top:0; z-index:999;}
+  header h1 {font-family: 'Montserrat', sans-serif; font-weight:700; font-size:2.2rem;}
+  nav a {color:#fff; margin:0 15px; text-decoration:none; font-weight:500; transition:0.3s;}
+  nav a:hover {text-decoration:underline;}
+  
+  /* ===== Hero ===== */
+  .hero {background:url('https://images.unsplash.com/photo-1599058917213-c87a4bbf6c87?auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+         height:75vh; display:flex; justify-content:center; align-items:center;
+         color:#fff; text-shadow:1px 1px 5px rgba(0,0,0,0.7);
+         font-family: 'Montserrat', sans-serif; font-size:2.5rem; text-align:center; position: relative; overflow:hidden;}
+  
+  /* ===== Secciones ===== */
+  section {padding:60px 20px; max-width:1200px; margin:auto;}
+  h2 {text-align:center; margin-bottom:40px; color:#1abc9c; font-family:'Montserrat',sans-serif; font-weight:700; font-size:2rem;}
+  .services, .plans, .testimonials {display:flex; flex-wrap:wrap; gap:25px; justify-content:center;}
+  
+  /* ===== Cards ===== */
+  .card {background:#fff; padding:25px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.12);
+         flex:1 1 320px; text-align:center; opacity:0; transform: translateY(50px); transition: all 0.8s ease-out; position:relative;}
+  .card.visible {opacity:1; transform: translateY(0);}
+  .card i {font-size:2.5rem; color:#1abc9c; margin-bottom:15px;}
+  .card h3 {font-family:'Montserrat',sans-serif; font-weight:600; margin-bottom:15px; font-size:1.5rem;}
+  .card p {line-height:1.6; font-size:0.95rem;}
+  .card a {display:inline-block; margin-top:15px; background:#25D366; color:#fff; padding:12px 25px; border-radius:50px; text-decoration:none; font-weight:600; transition:0.3s; box-shadow:0 5px 15px rgba(0,0,0,0.2);}
+  .card a:hover {background:#128C7E; transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,0.25);}
+  
+  /* ===== Footer ===== */
+  footer {background:#333; color:#fff; text-align:center; padding:25px 0; margin-top:30px; font-size:0.95rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Benestarfitnes</h1>
+  <nav>
+    <a href="#services">Servicios</a>
+    <a href="#plans">Planes</a>
+    <a href="#testimonials">Testimonios</a>
+  </nav>
+</header>
+
+<div class="hero">
+  ¡Transforma tu cuerpo y tu mente con Benestarfitnes!
+  <!-- Puedes cambiar la imagen de fondo: sube tu imagen a la carpeta assets y reemplaza la URL aquí -->
+</div>
+
+<section id="services">
+  <h2>Servicios</h2>
+  <div class="services">
+    <div class="card">
+      <i class="fas fa-dumbbell"></i>
+      <h3>Entrenamiento Personal</h3>
+      <p>Planes personalizados para alcanzar tus objetivos físicos de forma segura y efectiva.</p>
+    </div>
+    <div class="card">
+      <i class="fas fa-users"></i>
+      <h3>Clases Grupales</h3>
+      <p>Motivación en grupo con entrenamientos dinámicos y divertidos.</p>
+    </div>
+    <div class="card">
+      <i class="fas fa-apple-alt"></i>
+      <h3>Nutrición</h3>
+      <p>Asesoramiento nutricional para potenciar tus resultados y bienestar.</p>
+    </div>
+  </div>
+</section>
+
+<section id="plans">
+  <h2>Planes de Entrenamiento</h2>
+  <div class="plans">
+    <!-- Plan Trimestral Presencial -->
+    <div class="card">
+      <i class="fas fa-calendar-alt"></i>
+      <h3>Entrenamiento Personal (Plan Trimestral Presencial)</h3>
+      <p>Precio: 300,00 € EUR</p>
+      <p>Se puede fraccionar a 3 meses mediante PayPal.</p>
+      <p>Este plan cuenta con 8 bonos de entrenamiento por mes. Al mes sale a 100€ y cada entreno sale a 12.5€. Normalmente son 2 entrenos por semana, se puede modificar si hay algún imprevisto. Los bonos son mensuales, si no se consumen a lo largo del mes se pierden. Las sesiones son de grupos reducidos, al inicio individual.</p>
+      <a href="https://wa.me/34648768691?text=Hola,%20estoy%20interesado%20en%20el%20Plan%20Trimestral%20Presencial" target="_blank">Contactar por WhatsApp</a>
+    </div>
+
+    <!-- Plan Trimestral Online -->
+    <div class="card">
+      <i class="fas fa-laptop"></i>
+      <h3>Entrenamiento Personal (Plan Trimestral Online)</h3>
+      <p>Precio: 200,00 € EUR</p>
+      <p>Se puede fraccionar a 3 meses mediante PayPal.</p>
+      <p>Incluye asesoramiento nutricional, rutinas adaptadas a cada nivel, 2 videollamadas mensuales y consultas por WhatsApp para analizar técnica y detalles.</p>
+      <a href="https://wa.me/34648768691?text=Hola,%20estoy%20interesado%20en%20el%20Plan%20Trimestral%20Online" target="_blank">Contactar por WhatsApp</a>
+    </div>
+
+    <!-- Plan Anual Presencial -->
+    <div class="card">
+      <i class="fas fa-calendar-check"></i>
+      <h3>Entrenamiento Personal (Plan Anual Presencial)</h3>
+      <p>Precio: 1.000,00 € EUR</p>
+      <p>Se puede fraccionar a 3 meses mediante PayPal.</p>
+      <p>8 bonos de entrenamiento por mes. Al mes sale a 83€ y cada entreno a 10€. Normalmente 2 entrenos por semana, sesiones en grupos reducidos, inicio individual.</p>
+      <a href="https://wa.me/34648768691?text=Hola,%20estoy%20interesado%20en%20el%20Plan%20Anual%20Presencial" target="_blank">Contactar por WhatsApp</a>
+    </div>
+
+    <!-- Plan Anual Online -->
+    <div class="card">
+      <i class="fas fa-globe"></i>
+      <h3>Entrenamiento Personal (Plan Anual Online)</h3>
+      <p>Precio: 650,00 € EUR</p>
+      <p>Se puede fraccionar a 3 meses mediante PayPal.</p>
+      <p>Incluye asesoramiento nutricional, rutinas adaptadas a cada nivel, 2 videollamadas mensuales y consultas por WhatsApp para analizar técnica y detalles.</p>
+      <a href="https://wa.me/34648768691?text=Hola,%20estoy%20interesado%20en%20el%20Plan%20Anual%20Online" target="_blank">Contactar por WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<section id="testimonials">
+  <h2>Testimonios</h2>
+  <p style="text-align:center; margin-bottom:20px;">Aquí podrás leer las opiniones de nuestros clientes reales próximamente.</p>
+  <div class="testimonials"></div>
+</section>
+
+<!-- Botón flotante WhatsApp -->
+<a href="https://wa.me/34648768691" target="_blank" 
+   style="position: fixed; bottom:20px; right:20px; background:#25D366; color:#fff; padding:15px 20px; border-radius:50px; font-weight:bold; font-size:
