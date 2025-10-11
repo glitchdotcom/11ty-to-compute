@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ML ↔ AR Live Voice</title>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- No apple-touch-icon: iOS will use a screenshot for the home icon -->
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#0b1220;color:#e9eef7}
+    header{padding:16px 16px 0}
+    h1{margin:0;font-size:1.25rem}
+    .subtitle{margin:6px 0 0;color:#9fb3d1;font-size:0.95rem}
+    main{padding:16px}
+    .settings{background:#0f1a2f;border:1px solid #21324a;border-radius:12px;padding:12px;margin-bottom:14px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .row>div{min-width:190px;flex:1}
+    select,input[type=range]{width:100%}
+    .toggle{display:flex;align-items:center;gap:8px}
+    .note{color:#9fb3d1;margin-top:6px;font-size:.9rem}
+    .panes{display:grid;gap:14px}
+    .pane{background:#0f1a2f;border:1px solid #21324a;border-radius:12px;padding:12px}
+    h2{margin:0 0 8px;font-size:1.05rem}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+    textarea{width:100%;min-height:120px;border:1px solid #21324a;border-radius:10px;background:#0c1730;color:#e9eef7;padding:12px;font-size:1rem;outline:none}
+    button{border:none;border-radius:10px;padding:10px 14px;background:#2a62ff;color:white;font-weight:600;cursor:pointer}
+    button.ghost{background:#14213b;color:#d7e3ff}
+    button:disabled{opacity:.7;cursor:not-allowed}
+    .controls.rtl{justify-content:flex-end}
+    /* Captions overlay */
+    .captions{position:fixed;left:0;right:0;bottom:0;top:0;background:#000000d0;backdrop-filter:blur(4px);padding:16px;display:grid;grid-template-columns:1fr;gap:12px;z-index:9990}
+    .captions .col{display:flex;flex-direction:column;gap:8px}
+    .capbox{min-height:28vh;border:2px solid #2a62ff;border-radius:12px;padding:12px;font-size:1.8rem;line-height:1.4;overflow:auto;background:#0b1220;color:#e9eef7}
+    .capbox.rtl{direction:rtl;text-align:right}
+    .captions.hidden{display:none}
+    /* Toast */
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:#1f2a44;color:#fff;padding:10px 14px;border-radius:10px;transition:all .2s ease;font-weight:600;z-index:10000}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+    footer{padding:16px;color:#9fb3d1;text-align:center}
+    @media(min-width:900px){.captions{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Malayalam ↔ Arabic (Egyptian) — Live Voice</h1>
+  <p class="subtitle">iPhone-ready: install via Safari → Share → Add to Home Screen</p>
+</header>
+
+<main>
+  <section class="settings">
+    <div class="row">
+      <div>
+        <label>Arabic style</label>
+        <select id="arabicStyle">
+          <option value="egy">Egyptian (عامية مصرية)</option>
+          <option value="msa">MSA (فصحى)</option>
+        </select>
+      </div>
+      <div>
+        <label>Arabic colloquial level</label>
+        <input id="slangLevelAr" type="range" min="0" max="2" value="1" />
+      </div>
+      <div>
+        <label>Malayalam style</label>
+        <select id="malStyle">
+          <option value="colloq">Colloquial (Kerala popular)</option>
+          <option value="formal">Formal</option>
+        </select>
+      </div>
+      <div>
+        <label>Malayalam colloquial level</label>
+        <input id="slangLevelMl" type="range" min="0" max="2" value="1" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="toggle">
+        <label><input id="autoSpeak" type="checkbox" checked /> Auto-speak</label>
+      </div>
+      <div class="toggle">
+        <label><input id="autoTranslate" type="checkbox" checked /> Walkie-Talkie (auto-translate on speech end)</label>
+      </div>
+      <div class="toggle">
+        <label><input id="alwaysOn" type="checkbox" /> Always-on conversation</label>
+      </div>
+      <div class="toggle">
+        <label><input id="captionMode" type="checkbox" /> Big Captions mode</label>
+      </div>
+    </div>
+  </section>
+
+  <section class="panes">
+    <div class="pane">
+      <h2>Malayalam → Arabic (Egyptian)</h2>
+      <div class="controls">
+        <button id="mlListenBtn">🎤 Start (Malayalam)</button>
+        <button id="mlStopBtn" class="ghost">Stop</button>
+      </div>
+      <textarea id="mlHeard" placeholder="Malayalam you said… (recognized)"></textarea>
+      <div class="controls">
+        <button id="toArabicBtn">Translate →</button>
+      </div>
+      <textarea id="arOut" dir="rtl" placeholder="Arabic (Egyptian) translation here…"></textarea>
+      <div class="controls rtl">
+        <button id="speakArabicBtn">🔊 نطق عربي</button>
+        <button id="copyArabicBtn" class="ghost">نسخ</button>
+        <button id="shareArabicBtn" class="ghost">مشاركة</button>
+      </div>
+    </div>
+
+    <div class="pane">
+      <h2>Arabic (Egyptian) → Malayalam</h2>
+      <div class="controls">
+        <button id="arListenBtn">🎤 Start (Arabic)</button>
+        <button id="arStopBtn" class="ghost">إيقاف</button>
+      </div>
+      <textarea id="arHeard" dir="rtl" placeholder="ما سمعته بالعربية… (تعرف صوتي)"></textarea>
+      <div class="controls">
+        <button id="toMalayalamBtn">Translate →</button>
+      </div>
+      <textarea id="mlOut" placeholder="Malayalam translation here…"></textarea>
+      <div class="controls">
+        <button id="speakMalayalamBtn">🔊 Malayalam TTS</button>
+        <button id="copyMalayalamBtn" class="ghost">Copy</button>
+        <button id="shareMalayalamBtn" class="ghost">Share</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Big Captions Overlay -->
+  <section id="captions" class="captions hidden">
+    <div class="cap col">
+      <h3>Malayalam</h3>
+      <div id="capMlIn" class="capbox"></div>
+      <h3 dir="rtl">Arabic (Egyptian)</h3>
+      <div id="capArOut" class="capbox rtl"></div>
+    </div>
+    <div class="cap col">
+      <h3 dir="rtl">Arabic</h3>
+      <div id="capArIn" class="capbox rtl"></div>
+      <h3>Malayalam</h3>
+      <div id="capMlOut" class="capbox"></div>
+    </div>
+  </section>
+
+  <!-- Phrasebook Modal -->
+  <dialog id="phrasebookModal">
+    <form method="dialog" class="pb-form">
+      <h3>Phrasebook (editable JSON)</h3>
+      <p class="note">Sections: <code>ml2ar</code> and <code>ar2ml</code>. Key = find text, Value = replacement.</p>
+      <textarea id="phrasebookEditor" spellcheck="false" style="width:100%;height:40vh;background:#0c1730;color:#e9eef7;border:1px solid #21324a;border-radius:10px;padding:10px;font-family:ui-monospace,monospace"></textarea>
+      <div class="row">
+        <button id="savePhrasebook">Save</button>
+        <button value="cancel" class="ghost">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+</main>
+
+<footer>
+  <small>Runs fully in Safari with iPhone voices. For premium Azure voices, you’d need a small server later.</small>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
