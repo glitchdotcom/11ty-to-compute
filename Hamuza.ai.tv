@@ -1,0 +1,6104 @@
+// 📁 FILE: package.json
+{
+  "name": "hamuza-platform",
+  "version": "2.0.0",
+  "description": "منصة بث الفيديو بالذكاء الاصطناعي - النسخة المتكاملة",
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:web\" \"pnpm dev:api\"",
+    "dev:web": "cd apps/web && pnpm dev",
+    "dev:api": "cd apps/api && pnpm dev",
+    "build": "pnpm build:web && pnpm build:api",
+    "build:web": "cd apps/web && pnpm build",
+    "build:api": "cd apps/api && pnpm build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "14.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.3.0",
+    "framer-motion": "^10.16.0",
+    "react-hot-toast": "^2.4.1",
+    "@tanstack/react-query": "^5.0.0",
+    "next-themes": "^0.2.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0"
+  }
+}
+
+// 📁 FILE: apps/web/app/layout.tsx
+import { Inter, Cairo } from 'next/font/google';
+import { Providers } from './providers';
+import { FloatingPreview } from '../components/FloatingPreview';
+import { Navigation } from '../components/Navigation';
+import { QuickActions } from '../components/QuickActions';
+import './globals.css';
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter'
+});
+
+const cairo = Cairo({
+  subsets: ['arabic'],
+  variable: '--font-cairo'
+});
+
+export const metadata = {
+  title: 'Hamuza - منصة بث الفيديو بالذكاء الاصطناعي',
+  description: 'شاهد وأنشئ مقاطع فيديو مذهلة باستخدام الذكاء الاصطناعي. منصة متكاملة للبث والتوزيع.',
+  keywords: 'AI, فيديو, بث, streaming, ذكاء اصطناعي, إنشاء محتوى',
+  authors: [{ name: 'Hamuza Team' }],
+  viewport: 'width=device-width, initial-scale=1',
+  themeColor: '#000000',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="ar" dir="rtl" suppressHydrationWarning className="h-full">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <meta name="robots" content="index, follow" />
+      </head>
+      <body className={`${inter.variable} ${cairo.variable} font-sans h-full bg-gray-900`}>
+        <Providers>
+          <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+            <Navigation />
+            <main className="flex-1 pt-16">
+              {children}
+            </main>
+            <QuickActions />
+            <FloatingPreview />
+          </div>
+        </Providers>
+      </body>
+    </html>
+  );
+}
+
+// 📁 FILE: apps/web/app/providers.tsx
+'use client';
+
+import { ThemeProvider } from 'next-themes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactNode, useState, useEffect } from 'react';
+import { AuthProvider } from '../contexts/AuthContext';
+import { AppProvider } from '../contexts/AppContext';
+import { Toaster } from 'react-hot-toast';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+
+export function Providers({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 دقائق
+        gcTime: 10 * 60 * 1000, // 10 دقائق
+        retry: 2,
+        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+        refetchOnWindowFocus: process.env.NODE_ENV === 'production',
+      },
+      mutations: {
+        retry: 1,
+      },
+    },
+  }));
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner size="xl" />
+      </div>
+    );
+  }
+
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange
+      storageKey="hamuza-theme"
+    >
+      <QueryClientProvider client={queryClient}>
+        <AppProvider>
+          <AuthProvider>
+            {children}
+            <Toaster
+              position="top-left"
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  background: '#1f2937',
+                  color: '#fff',
+                  border: '1px solid #374151',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  maxWidth: '500px',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                  style: {
+                    background: '#064e3b',
+                    border: '1px solid #047857',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                  style: {
+                    background: '#7f1d1d',
+                    border: '1px solid #dc2626',
+                  },
+                },
+                loading: {
+                  style: {
+                    background: '#1e3a8a',
+                    border: '1px solid #3b82f6',
+                  },
+                },
+              }}
+            />
+          </AuthProvider>
+        </AppProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+}
+
+// 📁 FILE: apps/web/app/page.tsx
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Video, Category, User } from '@hamuza/shared';
+import { apiClient } from '../lib/api';
+import { VideoCard } from '../components/VideoCard';
+import { CategoryFilter } from '../components/CategoryFilter';
+import { SearchBar } from '../components/SearchBar';
+import { StatsOverview } from '../components/StatsOverview';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { useApp } from '../contexts/AppContext';
+
+const FEATURED_CATEGORIES = [
+  { id: 'ai-generated', name: '🦾 منشئ بالذكاء الاصطناعي', icon: '🤖' },
+  { id: 'trending', name: '🔥 الأكثر انتشاراً', icon: '🚀' },
+  { id: 'educational', name: '📚 تعليمي', icon: '🎓' },
+  { id: 'entertainment', name: '🎬 ترفيهي', icon: '🎪' },
+];
+
+export default function HomePage() {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'trending'>('newest');
+  const { user } = useApp();
+
+  const { data: videos, isLoading: videosLoading } = useQuery({
+    queryKey: ['videos', selectedCategory, searchQuery, sortBy],
+    queryFn: () => 
+      apiClient.get('/videos', {
+        params: {
+          category: selectedCategory === 'all' ? undefined : selectedCategory,
+          query: searchQuery || undefined,
+          sortBy,
+          limit: 24
+        }
+      }).then(res => res.videos),
+    placeholderData: (previousData) => previousData,
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiClient.get('/categories').then(res => res.categories),
+  });
+
+  const { data: featuredVideos } = useQuery({
+    queryKey: ['featured-videos'],
+    queryFn: () => apiClient.get('/videos/featured').then(res => res.videos),
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: () => apiClient.get('/stats').then(res => res.stats),
+  });
+
+  const filteredVideos = useMemo(() => {
+    if (!videos) return [];
+    return videos;
+  }, [videos]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* الهيرو سيكشن مع تأثيرات متقدمة */}
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent"></div>
+        
+        <motion.div 
+          className="relative container mx-auto text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.h1 
+            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Hamuza
+          </motion.h1>
+          
+          <motion.p 
+            className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            منصة البث الثورية التي تجمع بين قوة الذكاء الاصطناعي والإبداع البشري. 
+            شاهد محتوى فريد وأنشئ فيديوهات مذهلة بلمساتك الشخصية.
+          </motion.p>
+
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Link 
+              href="/ai-studio"
+              className="group relative bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+              <span className="relative z-10 flex items-center justify-center space-x-2">
+                <span>🎬</span>
+                <span>ابدأ الإنشاء بالذكاء الاصطناعي</span>
+              </span>
+            </Link>
+            
+            <Link 
+              href="/videos"
+              className="group bg-gray-700/50 hover:bg-gray-600/50 backdrop-blur-sm px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 border border-gray-600 hover:border-gray-500 hover:scale-105"
+            >
+              <span className="flex items-center justify-center space-x-2">
+                <span>📺</span>
+                <span>استكشف المكتبة</span>
+              </span>
+            </Link>
+          </motion.div>
+
+          {/* إحصائيات سريعة */}
+          {stats && (
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <div className="text-center p-4 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700">
+                <div className="text-2xl font-bold text-blue-400">{stats.totalVideos}+</div>
+                <div className="text-gray-400 text-sm">فيديو</div>
+              </div>
+              <div className="text-center p-4 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700">
+                <div className="text-2xl font-bold text-green-400">{stats.totalUsers}+</div>
+                <div className="text-gray-400 text-sm">مستخدم</div>
+              </div>
+              <div className="text-center p-4 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700">
+                <div className="text-2xl font-bold text-purple-400">{stats.aiGenerations}+</div>
+                <div className="text-gray-400 text-sm">إنشاء بالذكاء الاصطناعي</div>
+              </div>
+              <div className="text-center p-4 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700">
+                <div className="text-2xl font-bold text-yellow-400">{stats.totalHours}+</div>
+                <div className="text-gray-400 text-sm">ساعة مشاهدة</div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      </section>
+
+      {/* شريط البحث والتحكم */}
+      <section className="py-8 px-4 bg-gray-800/30 backdrop-blur-sm border-y border-gray-700/50">
+        <div className="container mx-auto">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex-1 w-full max-w-2xl">
+              <SearchBar 
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="ابحث في آلاف الفيديوهات..."
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-3 items-center">
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="newest">🆕 الأحدث</option>
+                <option value="popular">🔥 الأكثر شيوعاً</option>
+                <option value="trending">🚀 الأكثر انتشاراً</option>
+              </select>
+              
+              <div className="flex bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  ◼️
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  ☰
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* التصنيفات المميزة */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto">
+          <motion.h2 
+            className="text-3xl font-bold mb-8 text-white flex items-center space-x-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span>🎯</span>
+            <span>التصنيفات المميزة</span>
+          </motion.h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {FEATURED_CATEGORIES.map((category, index) => (
+              <motion.div
+                key={category.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <button
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`w-full p-6 rounded-2xl text-right transition-all duration-300 transform hover:scale-105 ${
+                    selectedCategory === category.id
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-2xl'
+                      : 'bg-gray-800/50 backdrop-blur-sm border border-gray-700 text-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-3xl mb-3">{category.icon}</div>
+                  <div className="font-bold text-lg">{category.name}</div>
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* الفيديوهات المميزة */}
+      {featuredVideos && featuredVideos.length > 0 && (
+        <section className="py-12 px-4 bg-gradient-to-r from-blue-600/5 to-purple-600/5">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <motion.h2 
+                className="text-3xl font-bold text-white flex items-center space-x-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <span>⭐</span>
+                <span>فيديوهات مميزة</span>
+              </motion.h2>
+              <Link 
+                href="/videos/featured"
+                className="text-blue-400 hover:text-blue-300 transition-colors flex items-center space-x-1"
+              >
+                <span>عرض الكل</span>
+                <span>→</span>
+              </Link>
+            </div>
+            
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {featuredVideos.slice(0, 3).map((video, index) => (
+                <motion.div key={video.id} variants={itemVariants}>
+                  <VideoCard 
+                    video={video} 
+                    featured 
+                    priority={index < 2}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* التصنيفات */}
+      <section className="py-12 px-4 bg-gray-800/30 backdrop-blur-sm">
+        <div className="container mx-auto">
+          <motion.h2 
+            className="text-3xl font-bold mb-8 text-white flex items-center space-x-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span>📂</span>
+            <span>جميع التصنيفات</span>
+          </motion.h2>
+          
+          <CategoryFilter
+            categories={categories || []}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
+      </section>
+
+      {/* شبكة الفيديوهات */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+            <motion.h2 
+              className="text-3xl font-bold text-white"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              {selectedCategory === 'all' ? '🎥 جميع الفيديوهات' : `📁 ${selectedCategory}`}
+              <span className="text-gray-400 text-lg ml-2">
+                ({filteredVideos.length} فيديو)
+              </span>
+            </motion.h2>
+
+            {user && (
+              <Link 
+                href="/ai-studio"
+                className="bg-green-600 hover:bg-green-500 px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2"
+              >
+                <span>✨</span>
+                <span>أنشئ فيديو جديد</span>
+              </Link>
+            )}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {videosLoading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex justify-center items-center py-20"
+              >
+                <LoadingSpinner size="lg" text="جاري تحميل الفيديوهات..." />
+              </motion.div>
+            ) : filteredVideos && filteredVideos.length > 0 ? (
+              <motion.div
+                key="content"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className={viewMode === 'grid' 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  : "space-y-4"
+                }
+              >
+                {filteredVideos.map((video, index) => (
+                  <motion.div
+                    key={video.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <VideoCard 
+                      video={video} 
+                      layout={viewMode}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-20"
+              >
+                <div className="text-8xl mb-6">🎬</div>
+                <h3 className="text-2xl font-bold text-gray-300 mb-4">لا توجد فيديوهات</h3>
+                <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                  {searchQuery 
+                    ? 'لم نعثر على فيديوهات تطابق بحثك. جرب مصطلحات أخرى.'
+                    : 'كن أول من ينشئ محتوى في هذا التصنيف وابدأ رحلتك الإبداعية.'
+                  }
+                </p>
+                {user ? (
+                  <Link 
+                    href="/ai-studio"
+                    className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-bold text-lg transition-colors inline-flex items-center space-x-2"
+                  >
+                    <span>🚀</span>
+                    <span>ابدأ الإنشاء الآن</span>
+                  </Link>
+                ) : (
+                  <Link 
+                    href="/auth/register"
+                    className="bg-green-600 hover:bg-green-700 px-8 py-4 rounded-2xl font-bold text-lg transition-colors inline-flex items-center space-x-2"
+                  >
+                    <span>👤</span>
+                    <span>انضم إلينا مجاناً</span>
+                  </Link>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </section>
+
+      {/* دعوة للعمل */}
+      <section className="py-20 px-4 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10">
+        <div className="container mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              🚀 مستعد لبدء رحلتك الإبداعية؟
+            </h2>
+            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+              انضم إلى آلاف المبدعين واستكشف قوة الذكاء الاصطناعي في إنشاء محتوى فيديو مذهل. 
+              منصة Hamuza توفر لك كل الأدوات التي تحتاجها للنجاح.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href={user ? "/ai-studio" : "/auth/register"}
+                className="group relative bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <span className="relative z-10 flex items-center justify-center space-x-2">
+                  <span>🎨</span>
+                  <span>{user ? 'أنشئ فيديو جديد' : 'انضم مجاناً'}</span>
+                </span>
+              </Link>
+              
+              <Link 
+                href="/dev-preview"
+                className="group bg-gray-700/50 hover:bg-gray-600/50 backdrop-blur-sm px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 border border-gray-600 hover:border-gray-500 hover:scale-105"
+              >
+                <span className="flex items-center justify-center space-x-2">
+                  <span>🛠️</span>
+                  <span>استكشف المنصة</span>
+                </span>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* إحصائيات المنصة */}
+      <StatsOverview />
+    </div>
+  );
+}
+
+// 📁 FILE: apps/web/app/ai-studio/page.tsx
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AIGenerateRequest, AspectRatio, Video, AIStyle } from '@hamuza/shared';
+import { apiClient } from '../../lib/api';
+import toast from 'react-hot-toast';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { StylePresetCard } from '../../components/ai/StylePresetCard';
+import { PromptAssistant } from '../../components/ai/PromptAssistant';
+import { GenerationHistory } from '../../components/ai/GenerationHistory';
+import { CreditBalance } from '../../components/ai/CreditBalance';
+
+const ASPECT_RATIOS = [
+  { value: AspectRatio.LANDSCAPE_16_9, label: '16:9 (أفقي)', icon: '📺', description: 'مناسب لمعظم الشاشات' },
+  { value: AspectRatio.PORTRAIT_9_16, label: '9:16 (عمودي)', icon: '📱', description: 'مثالي للهواتف' },
+  { value: AspectRatio.SQUARE_1_1, label: '1:1 (مربع)', icon: '⬜', description: 'منصات التواصل' },
+  { value: AspectRatio.CINEMATIC_21_9, label: '21:9 (سينمائي)', icon: '🎞️', description: 'تجربة سينمائية' },
+];
+
+const ADVANCED_SETTINGS = {
+  motionIntensity: {
+    min: 1,
+    max: 10,
+    steps: ['بطيء جداً', 'بطيء', 'معتدل', 'سريع', 'سريع جداً']
+  },
+  creativity: {
+    min: 1,
+    max: 10,
+    steps: ['دقيق', 'متوازن', 'مبدع', 'جريء', 'مبتكر جداً']
+  },
+  quality: {
+    min: 1,
+    max: 3,
+    steps: ['سريع', 'متوازن', 'أعلى جودة']
+  }
+};
+
+export default function AIStudio() {
+  const [prompt, setPrompt] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState<AIStyle | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.LANDSCAPE_16_9);
+  const [duration, setDuration] = useState(30);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [motionIntensity, setMotionIntensity] = useState(5);
+  const [creativity, setCreativity] = useState(6);
+  const [quality, setQuality] = useState(2);
+  const [negativePrompt, setNegativePrompt] = useState('');
+  const [currentStep, setCurrentStep] = useState<'style' | 'settings' | 'review'>('style');
+  
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+
+  const { data: userData } = useQuery({
+    queryKey: ['user-data'],
+    queryFn: () => apiClient.get('/auth/me').then(res => res.user),
+  });
+
+  const { data: stylePresets } = useQuery({
+    queryKey: ['ai-styles'],
+    queryFn: () => apiClient.get('/ai/styles').then(res => res.styles),
+  });
+
+  const { data: recentGenerations } = useQuery({
+    queryKey: ['recent-generations'],
+    queryFn: () => apiClient.get('/ai/jobs/recent').then(res => res.jobs),
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: (data: AIGenerateRequest) => 
+      apiClient.post('/ai/generate', data),
+    onSuccess: (data) => {
+      toast.success('بدأ إنشاء الفيديو! سنخبرك عند الانتهاء.', {
+        duration: 6000,
+        icon: '🎬',
+      });
+      setTimeout(() => {
+        window.location.href = `/ai-studio/jobs/${data.jobId}`;
+      }, 3000);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'حدث خطأ أثناء إنشاء الفيديو');
+    },
+  });
+
+  const calculateCredits = () => {
+    if (!selectedStyle) return 0;
+    
+    let credits = selectedStyle.baseCredits;
+    
+    // Duration credits (1 credit per 15 seconds)
+    credits += Math.ceil(duration / 15);
+    
+    // Quality multiplier
+    credits *= quality;
+    
+    // Motion intensity bonus
+    credits += Math.floor(motionIntensity / 3);
+    
+    // Creativity bonus
+    credits += Math.floor(creativity / 4);
+    
+    return Math.max(selectedStyle.baseCredits, Math.round(credits));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!prompt.trim()) {
+      toast.error('يرجى إدخال وصف للفيديو');
+      promptRef.current?.focus();
+      return;
+    }
+
+    if (!selectedStyle) {
+      toast.error('يرجى اختيار نمط للفيديو');
+      return;
+    }
+
+    if ((userData?.credits || 0) < calculateCredits()) {
+      toast.error('رصيدك غير كافٍ لإنشاء هذا الفيديو');
+      return;
+    }
+
+    generateMutation.mutate({
+      prompt: prompt.trim(),
+      style: selectedStyle.id,
+      aspectRatio,
+      duration,
+      negativePrompt: negativePrompt.trim() || undefined,
+      motionIntensity,
+      creativity,
+      quality,
+    });
+  };
+
+  const canGenerate = prompt.trim() && selectedStyle && !generateMutation.isPending && 
+                      (userData?.credits || 0) >= calculateCredits();
+
+  const steps = [
+    { id: 'style', name: 'اختر النمط', icon: '🎨' },
+    { id: 'settings', name: 'الإعدادات', icon: '⚙️' },
+    { id: 'review', name: 'مراجعة', icon: '👁️' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* الهيدر */}
+        <motion.div 
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            🎬 استديو الذكاء الاصطناعي
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            أنشئ فيديوهات مذهلة باستخدام الذكاء الاصطناعي. كل ما تحتاجه هو وصف لما تريد، والباقي على عاتقنا!
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* الشريط الجانبي */}
+          <div className="xl:col-span-1 space-y-6">
+            <CreditBalance 
+              credits={userData?.credits || 0} 
+              estimatedCost={calculateCredits()}
+            />
+            
+            <GenerationHistory generations={recentGenerations} />
+            
+            <PromptAssistant onPromptSelect={setPrompt} />
+          </div>
+
+          {/* المحتوى الرئيسي */}
+          <div className="xl:col-span-3">
+            {/* خطوات التقدم */}
+            <motion.div 
+              className="bg-gray-800 rounded-2xl p-6 mb-8 border border-gray-700"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="flex items-center justify-between">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <button
+                      onClick={() => setCurrentStep(step.id as any)}
+                      className={`flex items-center space-x-2 space-x-reverse px-4 py-2 rounded-xl transition-all ${
+                        currentStep === step.id
+                          ? 'bg-blue-600 text-white shadow-lg'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="text-lg">{step.icon}</span>
+                      <span className="font-medium">{step.name}</span>
+                    </button>
+                    {index < steps.length - 1 && (
+                      <div className="w-8 h-0.5 bg-gray-600 mx-2"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <form onSubmit={handleSubmit}>
+              <AnimatePresence mode="wait">
+                {currentStep === 'style' && (
+                  <motion.div
+                    key="style-step"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* اختيار النمط */}
+                    <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 mb-6">
+                      <h2 className="text-2xl font-bold mb-6 flex items-center space-x-2">
+                        <span>🎨</span>
+                        <span>اختر النمط الفني</span>
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {stylePresets?.map((style) => (
+                          <StylePresetCard
+                            key={style.id}
+                            style={style}
+                            selected={selectedStyle?.id === style.id}
+                            onSelect={setSelectedStyle}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* الوصف */}
+                    <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
+                      <label htmlFor="prompt" className="block text-2xl font-bold mb-4 flex items-center space-x-2">
+                        <span>🎯</span>
+                        <span>صف الفيديو الذي تريد إنشاءه</span>
+                      </label>
+                      <textarea
+                        ref={promptRef}
+                        id="prompt"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="مثال: فيديو لشروق الشمس فوق جبال مغطاة بالثلوج، مع طيور تحلق في السماء، نمط سينمائي واقعي، كاميرا بطيئة تظهر تفاصيل الجليد المتلألئ..."
+                        className="w-full h-40 px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg placeholder-gray-500 resize-none transition-all"
+                        required
+                      />
+                      <div className="flex justify-between text-sm text-gray-400 mt-2">
+                        <span>كلما كنت أكثر تفصيلاً، كانت النتائج أفضل</span>
+                        <span>{prompt.length}/2000</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {currentStep === 'settings' && (
+                  <motion.div
+                    key="settings-step"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* الإعدادات الأساسية */}
+                    <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 mb-6">
+                      <h2 className="text-2xl font-bold mb-6 flex items-center space-x-2">
+                        <span>⚙️</span>
+                        <span>الإعدادات الأساسية</span>
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* نسبة العرض */}
+                        <div>
+                          <label className="block text-lg font-bold mb-4">
+                            📐 نسبة العرض
+                          </label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {ASPECT_RATIOS.map((ratio) => (
+                              <button
+                                key={ratio.value}
+                                type="button"
+                                onClick={() => setAspectRatio(ratio.value)}
+                                className={`p-4 border-2 rounded-xl text-center transition-all ${
+                                  aspectRatio === ratio.value
+                                    ? 'border-blue-500 bg-blue-500/20 shadow-lg'
+                                    : 'border-gray-600 bg-gray-700 hover:border-gray-500'
+                                }`}
+                              >
+                                <div className="text-2xl mb-2">{ratio.icon}</div>
+                                <div className="font-bold text-sm mb-1">{ratio.label}</div>
+                                <div className="text-xs text-gray-400">{ratio.description}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* المدة */}
+                        <div>
+                          <label htmlFor="duration" className="block text-lg font-bold mb-2">
+                            ⏱️ المدة: <span className="text-blue-400">{duration} ثانية</span>
+                          </label>
+                          <input
+                            type="range"
+                            id="duration"
+                            min="5"
+                            max="120"
+                            step="5"
+                            value={duration}
+                            onChange={(e) => setDuration(Number(e.target.value))}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                          />
+                          <div className="flex justify-between text-sm text-gray-400 mt-2">
+                            <span>5s</span>
+                            <span>30s</span>
+                            <span>60s</span>
+                            <span>90s</span>
+                            <span>120s</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* الإعدادات المتقدمة */}
+                    <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="flex items-center space-x-2 text-xl font-bold text-gray-300 hover:text-white transition-colors mb-4"
+                      >
+                        <span>🔧</span>
+                        <span>الإعدادات المتقدمة</span>
+                        <span className={`transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`}>
+                          ▼
+                        </span>
+                      </button>
+
+                      <AnimatePresence>
+                        {showAdvanced && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="space-y-6 pt-4 border-t border-gray-700">
+                              {/* شدة الحركة */}
+                              <div>
+                                <label htmlFor="motionIntensity" className="block text-sm font-medium mb-2">
+                                  🏃 شدة الحركة: 
+                                  <span className="text-blue-400 mr-2"> {motionIntensity}/10</span>
+                                  <span className="text-gray-400 text-xs">
+                                    - {ADVANCED_SETTINGS.motionIntensity.steps[Math.floor(motionIntensity / 2)]}
+                                  </span>
+                                </label>
+                                <input
+                                  type="range"
+                                  id="motionIntensity"
+                                  min={ADVANCED_SETTINGS.motionIntensity.min}
+                                  max={ADVANCED_SETTINGS.motionIntensity.max}
+                                  value={motionIntensity}
+                                  onChange={(e) => setMotionIntensity(Number(e.target.value))}
+                                  className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+
+                              {/* الإبداع */}
+                              <div>
+                                <label htmlFor="creativity" className="block text-sm font-medium mb-2">
+                                  💡 مستوى الإبداع: 
+                                  <span className="text-purple-400 mr-2"> {creativity}/10</span>
+                                  <span className="text-gray-400 text-xs">
+                                    - {ADVANCED_SETTINGS.creativity.steps[Math.floor(creativity / 2)]}
+                                  </span>
+                                </label>
+                                <input
+                                  type="range"
+                                  id="creativity"
+                                  min={ADVANCED_SETTINGS.creativity.min}
+                                  max={ADVANCED_SETTINGS.creativity.max}
+                                  value={creativity}
+                                  onChange={(e) => setCreativity(Number(e.target.value))}
+                                  className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+
+                              {/* الجودة */}
+                              <div>
+                                <label htmlFor="quality" className="block text-sm font-medium mb-2">
+                                  🌟 جودة المخرجات: 
+                                  <span className="text-yellow-400 mr-2"> {ADVANCED_SETTINGS.quality.steps[quality - 1]}</span>
+                                </label>
+                                <input
+                                  type="range"
+                                  id="quality"
+                                  min={ADVANCED_SETTINGS.quality.min}
+                                  max={ADVANCED_SETTINGS.quality.max}
+                                  value={quality}
+                                  onChange={(e) => setQuality(Number(e.target.value))}
+                                  className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+
+                              {/* النفي */}
+                              <div>
+                                <label htmlFor="negativePrompt" className="block text-sm font-medium mb-2">
+                                  ❌ تجنب (اختياري)
+                                </label>
+                                <input
+                                  id="negativePrompt"
+                                  value={negativePrompt}
+                                  onChange={(e) => setNegativePrompt(e.target.value)}
+                                  placeholder="ما الذي تريد تجنبه في الفيديو (وجوه بشرية، نص، جودة منخفضة...)"
+                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
+
+                {currentStep === 'review' && (
+                  <motion.div
+                    key="review-step"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* مراجعة الطلب */}
+                    <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
+                      <h2 className="text-2xl font-bold mb-6 flex items-center space-x-2">
+                        <span>👁️</span>
+                        <span>مراجعة الطلب</span>
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        {/* تفاصيل الطلب */}
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-bold text-gray-300">تفاصيل الفيديو</h3>
+                          
+                          <div className="space-y-3">
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">النمط:</span>
+                              <span className="font-medium">{selectedStyle?.name}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">نسبة العرض:</span>
+                              <span className="font-medium">
+                                {ASPECT_RATIOS.find(r => r.value === aspectRatio)?.label}
+                              </span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">المدة:</span>
+                              <span className="font-medium">{duration} ثانية</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">الجودة:</span>
+                              <span className="font-medium">{ADVANCED_SETTINGS.quality.steps[quality - 1]}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* معاينة التكلفة */}
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-bold text-gray-300">التكلفة والرصيد</h3>
+                          
+                          <div className="space-y-3">
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">التكلفة المقدرة:</span>
+                              <span className="font-bold text-yellow-400">{calculateCredits()} رصيد</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">رصيدك الحالي:</span>
+                              <span className="font-medium">{userData?.credits || 0} رصيد</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                              <span className="text-gray-400">الرصيد المتبقي:</span>
+                              <span className={`font-bold ${
+                                (userData?.credits || 0) - calculateCredits() >= 0 
+                                  ? 'text-green-400' 
+                                  : 'text-red-400'
+                              }`}>
+                                {(userData?.credits || 0) - calculateCredits()} رصيد
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* الوصف */}
+                      <div className="bg-gray-700/50 rounded-xl p-4">
+                        <h4 className="font-bold text-gray-300 mb-2">وصف الفيديو:</h4>
+                        <p className="text-gray-200 leading-relaxed">{prompt}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* أزرار التنقل */}
+              <div className="flex justify-between mt-8">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (currentStep === 'settings') setCurrentStep('style');
+                    else if (currentStep === 'review') setCurrentStep('settings');
+                  }}
+                  className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2"
+                  disabled={currentStep === 'style'}
+                >
+                  <span>←</span>
+                  <span>السابق</span>
+                </button>
+
+                {currentStep !== 'review' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentStep === 'style' && prompt && selectedStyle) setCurrentStep('settings');
+                      else if (currentStep === 'settings') setCurrentStep('review');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2"
+                    disabled={
+                      (currentStep === 'style' && (!prompt || !selectedStyle)) ||
+                      (currentStep === 'settings' && !duration)
+                    }
+                  >
+                    <span>التالي</span>
+                    <span>→</span>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={!canGenerate}
+                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-600 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg flex items-center space-x-2"
+                  >
+                    {generateMutation.isPending ? (
+                      <>
+                        <LoadingSpinner size="sm" />
+                        <span>جاري الإنشاء...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🎬</span>
+                        <span>أنشئ الفيديو</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .slider-thumb::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 2px solid #1f2937;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .slider-thumb::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 2px solid #1f2937;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// 📁 FILE: apps/web/app/dev-preview/page.tsx
+'use client';
+
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SearchBar } from '../../components/SearchBar';
+import { useApp } from '../../contexts/AppContext';
+
+const ALL_PAGES = [
+  {
+    title: 'الصفحة الرئيسية',
+    path: '/',
+    description: 'الصفحة الرئيسية مع الكاروسيل والتوصيات والإحصائيات',
+    emoji: '🏠',
+    color: 'from-green-500 to-emerald-500',
+    category: 'main',
+    tags: ['رئيسي', 'توصيات', 'إحصائيات'],
+    priority: 10
+  },
+  {
+    title: 'استديو AI',
+    path: '/ai-studio',
+    description: 'صفحة إنشاء الفيديوهات بالذكاء الاصطناعي مع خطوات متعددة',
+    emoji: '🎬',
+    color: 'from-blue-500 to-cyan-500',
+    category: 'creation',
+    tags: ['إنشاء', 'ذكاء اصطناعي', 'فيديو'],
+    priority: 10
+  },
+  {
+    title: 'مكتبة الفيديو',
+    path: '/videos',
+    description: 'جميع الفيديوهات مع خيارات التصفية والبحث المتقدم',
+    emoji: '📺',
+    color: 'from-purple-500 to-pink-500',
+    category: 'content',
+    tags: ['عرض', 'تصفية', 'بحث'],
+    priority: 9
+  },
+  {
+    title: 'مشغل الفيديو',
+    path: '/videos/demo',
+    description: 'مشغل الفيديو مع التحكم بالجودة والترجمة والإعدادات',
+    emoji: '🎥',
+    color: 'from-red-500 to-orange-500',
+    category: 'player',
+    tags: ['تشغيل', 'جودة', 'إعدادات'],
+    priority: 8
+  },
+  {
+    title: 'لوحة الإدارة',
+    path: '/admin/moderation',
+    description: 'لوحة إدارة المحتوى والمراجعة والإحصائيات',
+    emoji: '⚡',
+    color: 'from-yellow-500 to-amber-500',
+    category: 'admin',
+    tags: ['إدارة', 'مراجعة', 'إحصائيات'],
+    priority: 7
+  },
+  {
+    title: 'الملف الشخصي',
+    path: '/profile',
+    description: 'صفحة الملف الشخصي والإعدادات والمحفوظات',
+    emoji: '👤',
+    color: 'from-indigo-500 to-blue-500',
+    category: 'user',
+    tags: ['حساب', 'إعدادات', 'محفوظات'],
+    priority: 8
+  },
+  {
+    title: 'البحث المتقدم',
+    path: '/search',
+    description: 'صفحة البحث مع الفلاتر المتقدمة والنتائج الذكية',
+    emoji: '🔍',
+    color: 'from-gray-500 to-gray-700',
+    category: 'discovery',
+    tags: ['بحث', 'فلاتر', 'نتائج'],
+    priority: 7
+  },
+  {
+    title: 'الإشعارات',
+    path: '/notifications',
+    description: 'مركز الإشعارات والإعدادات والتحديثات',
+    emoji: '🔔',
+    color: 'from-teal-500 to-green-500',
+    category: 'user',
+    tags: ['إشعارات', 'تحديثات', 'إعدادات'],
+    priority: 6
+  },
+  {
+    title: 'الإعدادات',
+    path: '/settings',
+    description: 'إعدادات الحساب والتطبيق والخصوصية',
+    emoji: '⚙️',
+    color: 'from-slate-500 to-gray-500',
+    category: 'user',
+    tags: ['إعدادات', 'خصوصية', 'تخصيص'],
+    priority: 6
+  },
+  {
+    title: 'المحتوى المفضل',
+    path: '/favorites',
+    description: 'الفيديوهات والمحتوى المفضل لدى المستخدم',
+    emoji: '❤️',
+    color: 'from-rose-500 to-pink-500',
+    category: 'content',
+    tags: ['مفضلة', 'محفوظات', 'محتوى'],
+    priority: 5
+  },
+  {
+    title: 'التاريخ والمشاهدة',
+    path: '/history',
+    description: 'سجل المشاهدة والتاريخ والنشاط',
+    emoji: '📊',
+    color: 'from-cyan-500 to-blue-500',
+    category: 'user',
+    tags: ['سجل', 'نشاط', 'مشاهدة'],
+    priority: 5
+  },
+  {
+    title: 'الاشتراكات',
+    path: '/subscriptions',
+    description: 'إدارة الاشتراكات والفوترة والمدفوعات',
+    emoji: '💳',
+    color: 'from-lime-500 to-green-500',
+    category: 'user',
+    tags: ['اشتراكات', 'مدفوعات', 'فوترة'],
+    priority: 4
+  },
+];
+
+const CATEGORIES = [
+  { id: 'all', name: 'جميع الصفحات', emoji: '📋', count: ALL_PAGES.length },
+  { id: 'main', name: 'رئيسية', emoji: '🏠', count: ALL_PAGES.filter(p => p.category === 'main').length },
+  { id: 'creation', name: 'إنشاء المحتوى', emoji: '🎬', count: ALL_PAGES.filter(p => p.category === 'creation').length },
+  { id: 'content', name: 'المحتوى', emoji: '📺', count: ALL_PAGES.filter(p => p.category === 'content').length },
+  { id: 'player', name: 'المشغل', emoji: '🎥', count: ALL_PAGES.filter(p => p.category === 'player').length },
+  { id: 'admin', name: 'الإدارة', emoji: '⚡', count: ALL_PAGES.filter(p => p.category === 'admin').length },
+  { id: 'user', name: 'المستخدم', emoji: '👤', count: ALL_PAGES.filter(p => p.category === 'user').length },
+  { id: 'discovery', name: 'اكتشاف', emoji: '🔍', count: ALL_PAGES.filter(p => p.category === 'discovery').length },
+];
+
+export default function DevPreview() {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortBy, setSortBy] = useState<'priority' | 'name' | 'category'>('priority');
+  const { version, environment } = useApp();
+
+  const filteredPages = useMemo(() => {
+    return ALL_PAGES
+      .filter(page => {
+        const matchesSearch = 
+          page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          page.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          page.tags.some(tag => tag.includes(searchTerm.toLowerCase()));
+        
+        const matchesCategory = selectedCategory === 'all' || page.category === selectedCategory;
+        
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'priority') return b.priority - a.priority;
+        if (sortBy === 'name') return a.title.localeCompare(b.title);
+        return a.category.localeCompare(b.category);
+      });
+  }, [searchTerm, selectedCategory, sortBy]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 md:p-8">
+      <div className="container mx-auto max-w-7xl">
+        {/* الهيدر */}
+        <motion.div 
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            🛠️ لوحة معاينة المطور
+          </h1>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            استكشف جميع صفحات المنصة للتطوير والاختبار. جميع الصفحات متاحة للمعاينة مع تفاصيل كاملة.
+          </p>
+          
+          {/* معلومات النسخة */}
+          <div className="mt-6 inline-flex items-center space-x-4 bg-gray-800/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-gray-700">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">🚀</span>
+              <span className="font-bold">{version}</span>
+            </div>
+            <div className="w-px h-6 bg-gray-600"></div>
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">🔧</span>
+              <span className="font-medium">{environment}</span>
+            </div>
+            <div className="w-px h-6 bg-gray-600"></div>
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">📅</span>
+              <span className="text-sm">{new Date().toLocaleDateString('ar-EG')}</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* شريط البحث والتحكم */}
+        <motion.div 
+          className="mb-8 space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <SearchBar 
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="🔍 ابحث في الصفحات..."
+                className="text-lg"
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-3">
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="priority">الأهمية</option>
+                <option value="name">الاسم</option>
+                <option value="category">التصنيف</option>
+              </select>
+              
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`flex items-center space-x-2 px-4 py-3 rounded-xl whitespace-nowrap transition-all ${
+                      selectedCategory === category.id
+                        ? 'bg-blue-600 text-white shadow-lg scale-105'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:scale-102'
+                    }`}
+                  >
+                    <span>{category.emoji}</span>
+                    <span>{category.name}</span>
+                    <span className="text-xs bg-gray-600 px-2 py-1 rounded-full">
+                      {category.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* نتائج البحث */}
+        <div className="mb-6 flex items-center justify-between">
+          <motion.h2 
+            className="text-2xl font-bold text-gray-300"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {filteredPages.length} صفحة
+            {selectedCategory !== 'all' && ` في ${CATEGORIES.find(c => c.id === selectedCategory)?.name}`}
+            {searchTerm && ` لـ "${searchTerm}"`}
+          </motion.h2>
+          
+          <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <span>🟢 جاهز</span>
+            <span>🟡 تحت التطوير</span>
+            <span>🔴 قيد الإنشاء</span>
+          </div>
+        </div>
+
+        {/* شبكة الصفحات */}
+        <AnimatePresence mode="wait">
+          {filteredPages.length > 0 ? (
+            <motion.div
+              key="pages-grid"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-12"
+            >
+              {filteredPages.map((page, index) => (
+                <motion.div
+                  key={page.path}
+                  variants={itemVariants}
+                  custom={index}
+                >
+                  <Link
+                    href={page.path}
+                    className="group relative bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-gray-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl overflow-hidden block h-full"
+                  >
+                    {/* الخلفية المتدرجة */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${page.color} opacity-5 group-hover:opacity-10 transition-opacity`}></div>
+                    
+                    {/* شارة الأولوية */}
+                    <div className="absolute top-4 left-4 bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full">
+                      {page.priority}/10
+                    </div>
+                    
+                    <div className="relative z-10 h-full flex flex-col">
+                      <div className="flex items-start space-x-4 space-x-reverse mb-4">
+                        <span className="text-4xl">{page.emoji}</span>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold mb-2 group-hover:text-white transition-colors line-clamp-2">
+                            {page.title}
+                          </h3>
+                          <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+                            {page.description}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* التصنيف والوسوم */}
+                      <div className="mt-auto space-y-3">
+                        <div className="flex flex-wrap gap-1">
+                          {page.tags.slice(0, 3).map((tag) => (
+                            <span 
+                              key={tag}
+                              className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-700">
+                          <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
+                            {page.category}
+                          </span>
+                          <span className="text-2xl opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                            →
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="no-results"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-20"
+            >
+              <div className="text-8xl mb-6">🔍</div>
+              <h3 className="text-3xl font-bold text-gray-300 mb-4">لم نعثر على صفحات</h3>
+              <p className="text-gray-500 mb-8 max-w-md mx-auto text-lg">
+                {searchTerm 
+                  ? 'لا توجد صفحات تطابق بحثك. جرب مصطلحات بحث أخرى أو اختر تصنيفاً مختلفاً.'
+                  : 'جرب البحث بمصطلحات مختلفة أو استخدم التصنيفات للتصفية.'
+                }
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCategory('all');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-bold text-lg transition-colors inline-flex items-center space-x-2"
+              >
+                <span>🔄</span>
+                <span>إعادة التعيين</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* إحصائيات ومعلومات */}
+        <motion.div 
+          className="bg-gray-800 rounded-2xl p-8 border border-gray-700 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <h2 className="text-3xl font-bold mb-8 flex items-center space-x-2">
+            <span>📊</span>
+            <span>إحصائيات المنصة</span>
+          </h2>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div className="text-center p-6 bg-gray-700/50 rounded-2xl border border-gray-600">
+              <div className="text-3xl font-bold text-blue-400 mb-2">{ALL_PAGES.length}</div>
+              <div className="text-gray-400">إجمالي الصفحات</div>
+            </div>
+            <div className="text-center p-6 bg-gray-700/50 rounded-2xl border border-gray-600">
+              <div className="text-3xl font-bold text-green-400 mb-2">
+                {CATEGORIES.length}
+              </div>
+              <div className="text-gray-400">عدد التصنيفات</div>
+            </div>
+            <div className="text-center p-6 bg-gray-700/50 rounded-2xl border border-gray-600">
+              <div className="text-3xl font-bold text-purple-400 mb-2">
+                {filteredPages.length}
+              </div>
+              <div className="text-gray-400">الصفحات المطابقة</div>
+            </div>
+            <div className="text-center p-6 bg-gray-700/50 rounded-2xl border border-gray-600">
+              <div className="text-3xl font-bold text-yellow-400 mb-2">
+                {Math.round((filteredPages.length / ALL_PAGES.length) * 100)}%
+              </div>
+              <div className="text-gray-400">نسبة النتائج</div>
+            </div>
+          </div>
+
+          {/* توزيع الصفحات حسب التصنيف */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-xl font-bold mb-4 text-gray-300">📈 توزيع الصفحات</h3>
+              <div className="space-y-3">
+                {CATEGORIES.filter(c => c.id !== 'all').map((category) => (
+                  <div key={category.id} className="flex items-center justify-between">
+                    <span className="text-gray-400 flex items-center space-x-2">
+                      <span>{category.emoji}</span>
+                      <span>{category.name}</span>
+                    </span>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-20 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{ width: `${(category.count / ALL_PAGES.length) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-gray-400 w-8 text-left">
+                        {category.count}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold mb-4 text-gray-300">🚀 إجراءات سريعة</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => window.open('http://localhost:3001/api/docs', '_blank')}
+                  className="w-full text-right bg-gray-700 hover:bg-gray-600 p-4 rounded-xl transition-all duration-300 transform hover:scale-102 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">📚</span>
+                    <div className="text-right">
+                      <div className="font-bold">وثائق API</div>
+                      <div className="text-sm text-gray-400">استكشف واجهة برمجة التطبيقات</div>
+                    </div>
+                  </div>
+                  <span className="text-2xl opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                </button>
+
+                <button
+                  onClick={() => window.open('/_next/development', '_blank')}
+                  className="w-full text-right bg-gray-700 hover:bg-gray-600 p-4 rounded-xl transition-all duration-300 transform hover:scale-102 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">🔧</span>
+                    <div className="text-right">
+                      <div className="font-bold">أدوات التطوير</div>
+                      <div className="text-sm text-gray-400">أدوات تطوير Next.js</div>
+                    </div>
+                  </div>
+                  <span className="text-2xl opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                </button>
+
+                <button
+                  onClick={() => router.push('/ai-studio')}
+                  className="w-full text-right bg-blue-600 hover:bg-blue-500 p-4 rounded-xl transition-all duration-300 transform hover:scale-102 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">🎬</span>
+                    <div className="text-right">
+                      <div className="font-bold">تجربة استديو AI</div>
+                      <div className="text-sm text-blue-200">أنشئ فيديو بالذكاء الاصطناعي</div>
+                    </div>
+                  </div>
+                  <span className="text-2xl opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* معلومات التقنية */}
+        <motion.div 
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
+            <h3 className="text-2xl font-bold mb-6 flex items-center space-x-2">
+              <span>🛠️</span>
+              <span>معلومات التقنية</span>
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">الواجهة الأمامية:</span>
+                <span className="font-medium bg-blue-500/20 text-blue-400 px-3 py-1 rounded-lg">Next.js 14, React 18, TypeScript</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">الخلفية:</span>
+                <span className="font-medium bg-green-500/20 text-green-400 px-3 py-1 rounded-lg">NestJS, PostgreSQL, Redis</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">التشغيل:</span>
+                <span className="font-medium bg-purple-500/20 text-purple-400 px-3 py-1 rounded-lg">Docker, Kubernetes</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">التنسيق:</span>
+                <span className="font-medium bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-lg">TailwindCSS, Framer Motion</span>
+              </div>
+              <div className="flex justify-between items-center py-3">
+                <span className="text-gray-400">الحالة:</span>
+                <span className="font-medium bg-green-500/20 text-green-400 px-3 py-1 rounded-lg">🟢 نشط ومستقر</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
+            <h3 className="text-2xl font-bold mb-6 flex items-center space-x-2">
+              <span>🔍</span>
+              <span>التفاصيل الفنية</span>
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">البيئة:</span>
+                <span className="font-medium text-cyan-400">{environment}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">النسخة:</span>
+                <span className="font-medium text-cyan-400">{version}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">الوقت:</span>
+                <span className="font-medium text-cyan-400">
+                  {new Date().toLocaleTimeString('ar-EG')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                <span className="text-gray-400">المتصفح:</span>
+                <span className="font-medium text-cyan-400">
+                  {typeof window !== 'undefined' ? navigator.userAgent.split(' ')[0] : 'غير معروف'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-3">
+                <span className="text-gray-400">الدعم:</span>
+                <span className="font-medium text-green-400">🟢 متاح 24/7</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// 📁 FILE: apps/web/components/FloatingPreview.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from '../contexts/AppContext';
+
+export function FloatingPreview() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3);
+  const pathname = usePathname();
+  const { environment } = useApp();
+
+  useEffect(() => {
+    setIsVisible(process.env.NODE_ENV === 'development');
+  }, []);
+
+  if (!isVisible || pathname === '/dev-preview') {
+    return null;
+  }
+
+  const quickPages = [
+    { name: '🏠 الرئيسية', path: '/', badge: null },
+    { name: '🎬 استديو AI', path: '/ai-studio', badge: 'جديد' },
+    { name: '📺 المكتبة', path: '/videos', badge: null },
+    { name: '⚡ الإدارة', path: '/admin/moderation', badge: 'Admin' },
+  ];
+
+  const quickActions = [
+    { name: '📱 تطبيق الجوال', action: () => window.open('/mobile', '_blank'), icon: '📲' },
+    { name: '📚 الوثائق', action: () => window.open('/docs', '_blank'), icon: '📖' },
+    { name: '🐛 الإبلاغ عن خطأ', action: () => window.open('/bugs', '_blank'), icon: '🔧' },
+  ];
+
+  return (
+    <>
+      {/* الزر العائم */}
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 left-6 z-50 w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full shadow-2xl flex items-center justify-center text-white font-bold text-xl transition-all duration-300 hover:scale-110 hover:shadow-3xl group"
+        title="لوحة المطور"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <span className="group-hover:rotate-90 transition-transform duration-300">🛠️</span>
+        
+        {/* تأثير النبض */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 animate-ping opacity-20"></div>
+        
+        {/* إشعار */}
+        {notificationCount > 0 && (
+          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+            {notificationCount}
+          </div>
+        )}
+      </motion.button>
+
+      {/* القائمة المنبثقة */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div 
+              className="fixed bottom-28 left-6 z-50 bg-gray-800 rounded-2xl shadow-2xl p-4 w-80 border border-gray-700 backdrop-blur-sm"
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              transition={{ duration: 0.2, type: "spring" }}
+            >
+              {/* الهيدر */}
+              <div className="flex items-center space-x-3 space-x-reverse mb-4 pb-4 border-b border-gray-700">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-lg">🛠️</span>
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-white">لوحة المطور</div>
+                  <div className="text-xs text-gray-400 flex items-center space-x-1">
+                    <span>{environment}</span>
+                    <span>•</span>
+                    <span className="text-green-400">🟢 نشط</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-700"
+                >
+                  <span className="text-lg">✕</span>
+                </button>
+              </div>
+              
+              {/* الصفحات السريعة */}
+              <div className="space-y-2 mb-4">
+                <div className="text-xs font-medium text-gray-400 px-2">الصفحات السريعة</div>
+                {quickPages.map((page, index) => (
+                  <Link 
+                    key={index}
+                    href={page.path}
+                    className="flex items-center justify-between w-full px-3 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm transition-all duration-200 group"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span>{page.name}</span>
+                      {page.badge && (
+                        <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">
+                          {page.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-0 translate-x-1">
+                      →
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              
+              {/* الإجراءات السريعة */}
+              <div className="space-y-2 mb-4">
+                <div className="text-xs font-medium text-gray-400 px-2">الإجراءات السريعة</div>
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={action.action}
+                    className="flex items-center justify-between w-full px-3 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm transition-all duration-200 group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span>{action.icon}</span>
+                      <span>{action.name}</span>
+                    </div>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      ↗
+                    </span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* رابط المعاينة الكاملة */}
+              <div className="pt-3 border-t border-gray-700">
+                <Link 
+                  href="/dev-preview"
+                  className="flex items-center justify-between w-full px-3 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm transition-colors font-medium group"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span>📋</span>
+                    <span>لوحة المعاينة الكاملة</span>
+                  </div>
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-0 translate-x-1">
+                    🔥
+                  </span>
+                </Link>
+              </div>
+
+              {/* معلومات التطوير */}
+              <div className="mt-3 p-3 bg-gray-900 rounded-lg">
+                <div className="text-xs text-gray-400 text-center space-y-1">
+                  <div>v2.1.0 • Dev Mode • {new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span>جميع الخدمات نشطة</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* overlay لإغلاق القائمة */}
+            <motion.div 
+              className="fixed inset-0 z-40"
+              onClick={() => setIsOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+          </>
+        )}
+      </AnimatePresence>
+
+      <style jsx>{`
+        .hover\\:shadow-3xl:hover {
+          box-shadow: 0 0 50px rgba(139, 92, 246, 0.5);
+        }
+      `}</style>
+    </>
+  );
+}
+
+// 📁 FILE: apps/web/components/Navigation.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from '../contexts/AppContext';
+import { UserMenu } from './UserMenu';
+
+export function Navigation() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
+  const { user, unreadNotifications } = useApp();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navItems = [
+    { name: '🏠 الرئيسية', path: '/', icon: '🏠' },
+    { name: '🎬 استديو AI', path: '/ai-studio', icon: '🎬' },
+    { name: '📺 المكتبة', path: '/videos', icon: '📺' },
+    { name: '🔍 البحث', path: '/search', icon: '🔍' },
+  ];
+
+  const isActivePath = (path: string) => {
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
+  };
+
+  return (
+    <motion.nav 
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-gray-900/95 backdrop-blur-md border-b border-gray-800 shadow-2xl' 
+          : 'bg-transparent'
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* الشعار */}
+          <Link 
+            href="/" 
+            className="flex items-center space-x-3 space-x-reverse group"
+          >
+            <motion.div 
+              className="relative"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-lg">🎬</span>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity"></div>
+            </motion.div>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Hamuza
+              </span>
+              <span className="text-xs text-gray-400 -mt-1">AI Video Platform</span>
+            </div>
+          </Link>
+
+          {/* عناصر التنقل - سطح المكتب */}
+          <div className="hidden md:flex items-center space-x-1 space-x-reverse">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 group ${
+                  isActivePath(item.path)
+                    ? 'text-white bg-blue-600 shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                <span className="flex items-center space-x-2 space-x-reverse">
+                  <span>{item.icon}</span>
+                  <span className="font-medium">{item.name}</span>
+                </span>
+                
+                {/* تأثير التحويم */}
+                {!isActivePath(item.path) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/10 group-hover:to-purple-500/10 rounded-xl transition-all duration-300"></div>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* جزئية المستخدم */}
+          <div className="flex items-center space-x-3 space-x-reverse">
+            {/* زر المعاينة للمطورين */}
+            {process.env.NODE_ENV === 'development' && (
+              <Link
+                href="/dev-preview"
+                className="hidden sm:flex items-center space-x-2 space-x-reverse px-3 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-sm font-medium transition-colors shadow-lg"
+              >
+                <span>🛠️</span>
+                <span>المعاينة</span>
+              </Link>
+            )}
+
+            {/* إشعارات */}
+            {user && (
+              <button className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800">
+                <span className="text-lg">🔔</span>
+                {unreadNotifications > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                    {unreadNotifications}
+                  </div>
+                )}
+              </button>
+            )}
+
+            {/* زر الدخول/المستخدم */}
+            {user ? (
+              <UserMenu user={user} />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link
+                  href="/auth/login"
+                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors font-medium"
+                >
+                  تسجيل الدخول
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 px-6 py-2 rounded-xl font-medium transition-all transform hover:scale-105 shadow-lg"
+                >
+                  <span className="flex items-center space-x-2">
+                    <span>👤</span>
+                    <span>انضم مجاناً</span>
+                  </span>
+                </Link>
+              </div>
+            )}
+
+            {/* زر القائمة للموبايل */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+            >
+              <div className="w-6 h-6 flex flex-col justify-center space-y-1">
+                <motion.div 
+                  className="h-0.5 bg-white"
+                  animate={{ 
+                    width: isMenuOpen ? '24px' : '16px',
+                    rotate: isMenuOpen ? 45 : 0,
+                    y: isMenuOpen ? 6 : 0 
+                  }}
+                ></motion.div>
+                <motion.div 
+                  className="h-0.5 bg-white"
+                  animate={{ opacity: isMenuOpen ? 0 : 1 }}
+                ></motion.div>
+                <motion.div 
+                  className="h-0.5 bg-white"
+                  animate={{ 
+                    width: isMenuOpen ? '24px' : '12px',
+                    rotate: isMenuOpen ? -45 : 0,
+                    y: isMenuOpen ? -6 : 0 
+                  }}
+                ></motion.div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* القائمة المنسدلة للموبايل */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              className="md:hidden py-4 border-t border-gray-800 bg-gray-900/95 backdrop-blur-md"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="space-y-2">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-4 py-3 rounded-lg transition-all ${
+                      isActivePath(item.path)
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    <span className="flex items-center space-x-3">
+                      <span>{item.icon}</span>
+                      <span>{item.name}</span>
+                    </span>
+                  </Link>
+                ))}
+                
+                {/* رابط المعاينة في الموبايل */}
+                {process.env.NODE_ENV === 'development' && (
+                  <Link
+                    href="/dev-preview"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-white transition-colors flex items-center space-x-3"
+                  >
+                    <span>🛠️</span>
+                    <span>معاينة المطور</span>
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.nav>
+  );
+}
+
+// 📁 FILE: apps/web/contexts/AppContext.tsx
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User } from '@hamuza/shared';
+
+interface AppContextType {
+  user: User | null;
+  setUser: (user: User | null) => void;
+  isLoading: boolean;
+  theme: 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
+  language: 'ar' | 'en';
+  setLanguage: (language: 'ar' | 'en') => void;
+  unreadNotifications: number;
+  version: string;
+  environment: string;
+  isMobile: boolean;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const version = '2.1.0';
+  const environment = process.env.NODE_ENV === 'development' ? 'التطوير' : 'الإنتاج';
+
+  useEffect(() => {
+    // استعادة إعدادات المستخدم من localStorage
+    const savedTheme = localStorage.getItem('hamuza-theme') as 'dark' | 'light' | null;
+    const savedLanguage = localStorage.getItem('hamuza-language') as 'ar' | 'en' | null;
+    
+    if (savedTheme) setTheme(savedTheme);
+    if (savedLanguage) setLanguage(savedLanguage);
+
+    // كشف جهاز الجوال
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    // محاكاة تحميل البيانات
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  useEffect(() => {
+    // حفظ الإعدادات في localStorage
+    localStorage.setItem('hamuza-theme', theme);
+    localStorage.setItem('hamuza-language', language);
+  }, [theme, language]);
+
+  const value: AppContextType = {
+    user,
+    setUser,
+    isLoading,
+    theme,
+    setTheme,
+    language,
+    setLanguage,
+    unreadNotifications,
+    version,
+    environment,
+    isMobile,
+    sidebarOpen,
+    setSidebarOpen,
+  };
+
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+}
+
+// 📁 FILE: apps/web/lib/api.ts
+class ApiClient {
+  private baseURL: string;
+  private accessToken: string | null;
+
+  constructor() {
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    this.accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
+    const config: RequestInit = {
+      headers,
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      
+      if (response.status === 401) {
+        // Token expired, try to refresh
+        await this.refreshToken();
+        // Retry the request with new token
+        return this.request(endpoint, options);
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('حدث خطأ غير متوقع في الاتصال بالخادم');
+    }
+  }
+
+  private async refreshToken() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      this.accessToken = data.accessToken;
+      localStorage.setItem('accessToken', data.accessToken);
+    } catch (error) {
+      // Redirect to login if refresh fails
+      this.clearAuth();
+      window.location.href = '/auth/login';
+      throw error;
+    }
+  }
+
+  private clearAuth() {
+    this.accessToken = null;
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  }
+
+  setAuthToken(token: string) {
+    this.accessToken = token;
+    localStorage.setItem('accessToken', token);
+  }
+
+  clearAuthToken() {
+    this.clearAuth();
+  }
+
+  async get(endpoint: string, params?: Record<string, any>) {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request(`${endpoint}${queryString}`);
+  }
+
+  async post(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async patch(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async delete(endpoint: string) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+    });
+  }
+
+  async upload(endpoint: string, formData: FormData) {
+    const url = `${this.baseURL}${endpoint}`;
+    
+    const headers: HeadersInit = {};
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('حدث خطأ أثناء رفع الملف');
+    }
+  }
+}
+
+export const apiClient = new ApiClient();
+
+// 📁 FILE: apps/web/app/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 17, 24, 39;
+  --background-end-rgb: 0, 0, 0;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: var(--font-inter), var(--font-cairo), sans-serif;
+  height: 100%;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* تخصيص شريط التمرير */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+::-webkit-scrollbar-corner {
+  background: #1f2937;
+}
+
+/* إخفاء شريط التمرير في بعض العناصر */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* تأثيرات الحركة */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+  background-size: 300% 300%;
+  animation: gradient 6s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* تحسينات للوضع المظلم */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* تأثيرات التركيز للوصول */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* تحسينات الأداء */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* تحسينات للخطوط العربية */
+.arabic-text {
+  letter-spacing: 0;
+  word-spacing: normal;
+}
+
+/* تخصيص زر السلايدر */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+/* تخصيص مكانة النص */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* تأثيرات الظل المحسنة */
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.shadow-3xl {
+  box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.7);
+}
+
+/* تحسينات للصور */
+img {
+  transition: transform 0.3s ease;
+}
+
+img:hover {
+  transform: scale(1.05);
+}
+
+/* تخصيص زر اللودنج */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* تأثيرات الاهتزاز */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* تدرجات مخصصة */
+.gradient-border {
+  border: 2px solid transparent;
+  background: linear-gradient(45deg, #1f2937, #1f2937), 
+              linear-gradient(45deg, #3b82f6, #8b5cf6);
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+}
+
+/* تحسينات للشبكات */
+.grid-auto-fit {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid-auto-fill {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* تأثيرات الظل النصية */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* تحسينات للوضع المظلم في المدخلات */
+input, textarea, select {
+  color-scheme: dark;
+}
+
+/* تخصيص زر التبديل */
+.toggle-bg:after {
+  content: '';
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  background: white;
+  border-radius: 50%;
+  height: 1.25rem;
+  width: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+input:checked + .toggle-bg:after {
+  transform: translateX(100%);
+}
+
+input:checked + .toggle-bg {
+  background: #3b82f6;
+}
+
+/* تأثيرات التحويم للبطاقات */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* تخصيص شريط التقدم */
+.progress-bar {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+  background-size: 200% 100%;
+  animation: gradient 2s ease infinite;
+}
+
+/* تأثيرات الدخول والخروج */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* تخصيص زر الإغلاق */
+.close-button {
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+/* تحسينات للرموز التعبيرية */
+.emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", "Noto Color Emoji Compat", "emoji";
+}
+
+/* تأثيرات الخلفية */
+.background-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* تخصيص زر الإرسال */
+.submit-button {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+.submit-button:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* تخصيص العناوين */
+.heading-gradient {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: gradient 3s ease infinite;
+}
+
+/* تأثيرات التنقل */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: width 0.3s ease;
+}
+
+.nav-item:hover::after,
+.nav-item.active::after {
+  width: 100%;
+}
+
+/* تخصيص الأزرار */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg;
+}
+
+.btn-secondary {
+  @apply bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 border border-gray-600 hover:border-gray-500;
+}
+
+.btn-success {
+  @apply bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300;
+}
+
+/* تخصيص البطاقات */
+.card {
+  @apply bg-gray-800 rounded-xl border border-gray-700 hover:border-gray-600 transition-all duration-300;
+}
+
+.card-hover {
+  @apply card transform hover:-translate-y-1 hover:shadow-xl;
+}
+
+/* تخصيص المدخلات */
+.input-primary {
+  @apply bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+}
+
+/* تخصيص التحديد */
+.select-primary {
+  @apply bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer;
+}
+
+/* تخصيص النصوص */
+.text-gradient {
+  @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+}
+
+/* تأثيرات التحميل */
+.skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* تخصيص التنبيهات */
+.alert {
+  @apply p-4 rounded-lg border;
+}
+
+.alert-success {
+  @apply bg-green-900/20 border-green-800 text-green-400;
+}
+
+.alert-error {
+  @apply bg-red-900/20 border-red-800 text-red-400;
+}
+
+.alert-warning {
+  @apply bg-yellow-900/20 border-yellow-800 text-yellow-400;
+}
+
+.alert-info {
+  @apply bg-blue-900/20 border-blue-800 text-blue-400;
+}
+
+/* تحسينات للاستجابة */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full {
+    width: 100%;
+  }
+  
+  .mobile-text-center {
+    text-align: center;
+  }
+}
+
+/* تخصيص شريط التقدم الدائري */
+.circular-progress {
+  transform: rotate(-90deg);
+}
+
+.circular-progress-bg {
+  fill: none;
+  stroke: #374151;
+}
+
+.circular-progress-fill {
+  fill: none;
+  stroke: #3b82f6;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s ease;
+}
+
+/* تأثيرات البكسلات */
+.pixelated {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* تخصيص العلامات */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-primary {
+  @apply bg-blue-500/20 text-blue-400;
+}
+
+.badge-success {
+  @apply bg-green-500/20 text-green-400;
+}
+
+.badge-warning {
+  @apply bg-yellow-500/20 text-yellow-400;
+}
+
+.badge-error {
+  @apply bg-red-500/20 text-red-400;
+}
+
+.badge-gray {
+  @apply bg-gray-500/20 text-gray-400;
+}
+
+/* تخصيص الأقسام */
+.section {
+  @apply py-12 px-4;
+}
+
+.section-title {
+  @apply text-3xl font-bold text-white mb-8;
+}
+
+.section-subtitle {
+  @apply text-xl text-gray-300 mb-8 max-w-3xl;
+}
+
+/* تخصيص الشبكات */
+.grid-responsive {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+}
+
+/* تأثيرات الظل للنصوص */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-md {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* تخصيص الأيقونات */
+.icon-sm {
+  @apply w-4 h-4;
+}
+
+.icon-md {
+  @apply w-6 h-6;
+}
+
+.icon-lg {
+  @apply w-8 h-8;
+}
+
+.icon-xl {
+  @apply w-12 h-12;
+}
+
+/* تأثيرات التحويم للأيقونات */
+.icon-hover {
+  @apply transition-transform duration-200 hover:scale-110;
+}
+
+/* تخصيص الأزرار ذات الأيقونات */
+.btn-icon {
+  @apply inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-gray-700;
+}
+
+/* تخصيص القوائم */
+.menu-item {
+  @apply flex items-center space-x-3 space-x-reverse px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-all duration-200;
+}
+
+.menu-item.active {
+  @apply bg-blue-600 text-white;
+}
+
+/* تخصيص الجداول */
+.table-container {
+  @apply overflow-x-auto rounded-lg border border-gray-700;
+}
+
+.table {
+  @apply min-w-full divide-y divide-gray-700;
+}
+
+.table th {
+  @apply px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-800;
+}
+
+.table td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-300;
+}
+
+.table tr {
+  @apply hover:bg-gray-800/50 transition-colors duration-200;
+}
+
+/* تخصيص النماذج */
+.form-group {
+  @apply space-y-2;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-300;
+}
+
+.form-error {
+  @apply text-sm text-red-400 mt-1;
+}
+
+.form-help {
+  @apply text-sm text-gray-400 mt-1;
+}
+
+/* تخصيص المحاور */
+.tabs {
+  @apply flex space-x-1 space-x-reverse;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200;
+}
+
+.tab.inactive {
+  @apply text-gray-400 hover:text-white hover:bg-gray-800;
+}
+
+.tab.active {
+  @apply bg-blue-600 text-white shadow-lg;
+}
+
+/* تخصيص التبديل */
+.switch {
+  @apply relative inline-flex h-6 w-11 items-center rounded-full;
+}
+
+.switch input {
+  @apply sr-only;
+}
+
+.switch-slider {
+  @apply inline-block h-4 w-4 transform rounded-full bg-white transition;
+}
+
+.switch:has(input:checked) .switch-slider {
+  @apply translate-x-5;
+}
+
+/* تخصيص التلميحات */
+.tooltip {
+  @apply absolute z-50 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply visible opacity-100;
+}
+
+/* تخصيص القوائم المنسدلة */
+.dropdown {
+  @apply absolute z-50 mt-2 w-56 rounded-lg shadow-xl bg-gray-800 border border-gray-700 backdrop-blur-sm;
+}
+
+.dropdown-item {
+  @apply flex items-center space-x-3 space-x-reverse px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200 cursor-pointer;
+}
+
+/* تخصيص المودالات */
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm;
+}
+
+.modal-content {
+  @apply bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl max-w-md w-full mx-4;
+}
+
+.modal-header {
+  @apply flex items-center justify-between p-6 border-b border-gray-700;
+}
+
+.modal-body {
+  @apply p-6;
+}
+
+.modal-footer {
+  @apply flex items-center justify-end space-x-3 space-x-reverse p-6 border-t border-gray-700;
+}
+
+/* تخصيص الصور الخلفية */
+.bg-gradient-radial {
+  background-image: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+}
+
+.bg-gradient-conic {
+  background-image: conic-gradient(from 0deg at 50% 50%, var(--tw-gradient-stops));
+}
+
+/* تأثيرات الطبقات */
+.layer-1 {
+  @apply relative z-10;
+}
+
+.layer-2 {
+  @apply relative z-20;
+}
+
+.layer-3 {
+  @apply relative z-30;
+}
+
+.layer-modal {
+  @apply relative z-50;
+}
+
+.layer-toast {
+  @apply relative z-60;
+}
+
+.layer-tooltip {
+  @apply relative z-70;
+}
+
+/* تخصيص الرسوم المتحركة */
+.animate-bounce-slow {
+  animation: bounce 2s infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
+/* تأثيرات التحويم المتقدمة */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* تخصيص شريط التقدم الخطي */
+.linear-progress {
+  @apply w-full h-2 bg-gray-700 rounded-full overflow-hidden;
+}
+
+.linear-progress-fill {
+  @apply h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out;
+}
+
+/* تخصيص العلامات المائية */
+.watermark {
+  @apply absolute inset-0 pointer-events-none opacity-5;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50 L100 0 L100 100 L0 100 L0 0 Z' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+}
+
+/* تأثيرات التركيز المحسنة */
+.focus-ring:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-900;
+}
+
+/* تخصيص الأزرار المحملة */
+.btn-loading {
+  @apply relative text-transparent transition-none;
+}
+
+.btn-loading::after {
+  @apply absolute inset-0 flex items-center justify-center;
+  content: '...';
+  color: white;
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+/* تخصيص الحدود المتدرجة */
+.border-gradient {
+  border: 2px solid transparent;
+  background: 
+    linear-gradient(45deg, #1f2937, #1f2937) padding-box,
+    linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899) border-box;
+}
+
+/* تأثيرات الاهتزاز عند الخطأ */
+.shake-on-error {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* تخصيص الأزرار المستديرة */
+.btn-circle {
+  @apply rounded-full p-3 transition-all duration-200 hover:scale-110;
+}
+
+.btn-circle-sm {
+  @apply btn-circle w-10 h-10;
+}
+
+.btn-circle-md {
+  @apply btn-circle w-12 h-12;
+}
+
+.btn-circle-lg {
+  @apply btn-circle w-16 h-16;
+}
+
+/* تخصيص العناوين الفرعية */
+.subheading {
+  @apply text-lg text-gray-400 mb-4;
+}
+
+/* تخصيص النصوص المساعدة */
+.helper-text {
+  @apply text-sm text-gray-500;
+}
+
+/* تخصيص الرسائل */
+.message {
+  @apply p-4 rounded-lg border;
+}
+
+.message-success {
+  @apply message bg-green-900/20 border-green-800 text-green-400;
+}
+
+.message-error {
+  @apply message bg-red-900/20 border-red-800 text-red-400;
+}
+
+.message-warning {
+  @apply message bg-yellow-900/20 border-yellow-800 text-yellow-400;
+}
+
+.message-info {
+  @apply message bg-blue-900/20 border-blue-800 text-blue-400;
+}
+
+/* تخصيص الأقسام المطوية */
+.collapsible-section {
+  @apply border-b border-gray-700 last:border-b-0;
+}
+
+.collapsible-header {
+  @apply flex items-center justify-between w-full p-4 text-left hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer;
+}
+
+.collapsible-content {
+  @apply overflow-hidden transition-all duration-300;
+}
+
+.collapsible-content.closed {
+  @apply max-h-0;
+}
+
+.collapsible-content.open {
+  @apply max-h-screen;
+}
+
+/* تخصيص الأزرار العائمة */
+.fab {
+  @apply fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg flex items-center justify-center text-white font-bold text-xl transition-all duration-300 hover:scale-110;
+}
+
+.fab-secondary {
+  @apply fab bg-gray-700 hover:bg-gray-600;
+}
+
+.fab-success {
+  @apply fab bg-green-600 hover:bg-green-500;
+}
+
+.fab-danger {
+  @apply fab bg-red-600 hover:bg-red-500;
+}
+
+/* تخصيص شارات الحالة */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-online {
+  @apply status-badge bg-green-500/20 text-green-400;
+}
+
+.status-offline {
+  @apply status-badge bg-gray-500/20 text-gray-400;
+}
+
+.status-busy {
+  @apply status-badge bg-yellow-500/20 text-yellow-400;
+}
+
+.status-error {
+  @apply status-badge bg-red-500/20 text-red-400;
+}
+
+/* تخصيص الأقسام ذات الخلفيات المتغيرة */
+.section-alt {
+  @apply bg-gray-800/30 backdrop-blur-sm;
+}
+
+.section-highlight {
+  @apply bg-gradient-to-r from-blue-600/10 to-purple-600/10;
+}
+
+.section-dark {
+  @apply bg-gray-900;
+}
+
+/* تخصيص الروابط */
+.link {
+  @apply text-blue-400 hover:text-blue-300 transition-colors duration-200 underline;
+}
+
+.link-secondary {
+  @apply text-gray-400 hover:text-gray-300 transition-colors duration-200;
+}
+
+/* تخصيص الأزرار الكبيرة */
+.btn-xl {
+  @apply px-8 py-4 text-lg font-semibold rounded-xl;
+}
+
+.btn-2xl {
+  @apply px-12 py-6 text-xl font-bold rounded-2xl;
+}
+
+/* تأثيرات الدخول المتتالية */
+.stagger-children > * {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* تخصيص الأيقونات المتحركة */
+.icon-spin {
+  animation: spin 2s linear infinite;
+}
+
+.icon-bounce {
+  animation: bounce 2s infinite;
+}
+
+.icon-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* تخصيص الخلفيات المخططة */
+.bg-stripes {
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent);
+  background-size: 10px 10px;
+}
+
+/* تخصيص الأزرار المحورة */
+.btn-skew {
+  transform: skew(-15deg);
+}
+
+.btn-skew > span {
+  transform: skew(15deg);
+  display: inline-block;
+}
+
+/* تأثيرات التحويم للصور */
+.image-hover {
+  transition: all 0.5s ease;
+}
+
+.image-hover:hover {
+  transform: scale(1.1) rotate(1deg);
+}
+
+/* تخصيص العناوين ذات الخطوط المميزة */
+.font-display {
+  font-family: var(--font-cairo), var(--font-inter), sans-serif;
+}
+
+/* تخصيص الأزرار الشفافة */
+.btn-glass {
+  @apply bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300;
+}
+
+/* تخصيص الشعارات */
+.logo {
+  @apply font-display font-bold text-2xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+}
+
+.logo-sm {
+  @apply logo text-xl;
+}
+
+.logo-lg {
+  @apply logo text-4xl;
+}
+
+.logo-xl {
+  @apply logo text-6xl;
+}
+
+/* تخصيص الأقسام الكبيرة */
+.hero-section {
+  @apply min-h-screen flex items-center justify-center relative overflow-hidden;
+}
+
+.cta-section {
+  @apply py-20 bg-gradient-to-r from-blue-600/10 to-purple-600/10;
+}
+
+/* تخصيص الأزرار ذات الظلال الملونة */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+}
+
+/* تخصيص العناوين الرئيسية */
+.main-heading {
+  @apply text-4xl md:text-6xl font-bold text-white mb-6;
+}
+
+.sub-heading {
+  @apply text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl;
+}
+
+/* تخصيص الأزرار المميزة */
+.btn-featured {
+  @apply relative overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl;
+}
+
+.btn-featured::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-featured:hover::before {
+  left: 100%;
+}
+
+/* تخصيص البطاقات المميزة */
+.card-featured {
+  @apply relative overflow-hidden bg-gray-800 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl;
+}
+
+.card-featured::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+}
+
+/* تخصيص الأيقونات المميزة */
+.icon-featured {
+  @apply w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg;
+}
+
+/* تخصيص الأقسام المميزة */
+.section-featured {
+  @apply relative overflow-hidden;
+}
+
+.section-featured::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* تخصيص النصوص المميزة */
+.text-featured {
+  @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الخاصة */
+.btn-magic {
+  @apply relative overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg;
+}
+
+.btn-magic::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* تخصيص العناوين المتحركة */
+.animate-typing {
+  overflow: hidden;
+  border-right: 2px solid;
+  white-space: nowrap;
+  animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #3b82f6; }
+}
+
+/* تخصيص الأزرار المحملة بشكل جميل */
+.btn-loading-beautiful {
+  @apply relative overflow-hidden;
+}
+
+.btn-loading-beautiful::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: loading-shine 1.5s infinite;
+}
+
+@keyframes loading-shine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* تخصيص البطاقات المتحركة */
+.card-animated {
+  animation: card-enter 0.6s ease-out;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* تخصيص الأيقونات المتحركة */
+.icon-animated {
+  animation: icon-bounce 2s infinite;
+}
+
+@keyframes icon-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* تخصيص الأزرار ذات الظلال المتحركة */
+.btn-shadow-animated {
+  animation: shadow-pulse 2s infinite;
+}
+
+@keyframes shadow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+  }
+}
+
+/* تخصيص النصوص المتلألئة */
+.text-shimmer {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  background-size: 300% 100%;
+  animation: shimmer 3s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* تخصيص الخلفيات المتحركة */
+.bg-animated {
+  animation: gradient-shift 10s ease infinite;
+  background-size: 400% 400%;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* تخصيص الأزرار ذات التأثيرات المغناطيسية */
+.btn-magnetic {
+  transition: all 0.3s ease;
+}
+
+.btn-magnetic:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* تخصيص البطاقات ذات التأثيرات المغناطيسية */
+.card-magnetic {
+  transition: all 0.3s ease;
+}
+
+.card-magnetic:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* تخصيص الأيقونات المغناطيسية */
+.icon-magnetic {
+  transition: all 0.3s ease;
+}
+
+.icon-magnetic:hover {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* تخصيص النصوص المغناطيسية */
+.text-magnetic {
+  transition: all 0.3s ease;
+}
+
+.text-magnetic:hover {
+  transform: scale(1.05);
+}
+
+/* تخصيص الأزرار ذات التأثيرات اللمسية */
+.btn-tactile {
+  transition: all 0.1s ease;
+}
+
+.btn-tactile:active {
+  transform: scale(0.95);
+}
+
+/* تخصيص البطاقات ذات التأثيرات اللمسية */
+.card-tactile {
+  transition: all 0.2s ease;
+}
+
+.card-tactile:active {
+  transform: scale(0.98);
+}
+
+/* تخصيص الأيقونات اللمسية */
+.icon-tactile {
+  transition: all 0.1s ease;
+}
+
+.icon-tactile:active {
+  transform: scale(0.9);
+}
+
+/* تخصيص النصوص اللمسية */
+.text-tactile {
+  transition: all 0.1s ease;
+}
+
+.text-tactile:active {
+  transform: scale(0.95);
+}
+
+/* تخصيص الأزرار ذات التأثيرات السائلة */
+.btn-liquid {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-liquid:hover::before {
+  left: 100%;
+}
+
+/* تخصيص البطاقات السائلة */
+.card-liquid {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  transition: left 0.5s;
+}
+
+.card-liquid:hover::before {
+  left: 100%;
+}
+
+/* تخصيص الأيقونات السائلة */
+.icon-liquid {
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.icon-liquid:hover::before {
+  left: 100%;
+}
+
+/* تخصيص النصوص السائلة */
+.text-liquid {
+  position: relative;
+  overflow: hidden;
+}
+
+.text-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s;
+}
+
+.text-liquid:hover::before {
+  left: 100%;
+}
+
+/* تخصيص الأزرار ذات التأثيرات النيونية */
+.btn-neon {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5),
+              0 0 20px rgba(59, 130, 246, 0.3),
+              0 0 30px rgba(59, 130, 246, 0.1);
+  transition: all 0.3s ease;
+}
+
+.btn-neon:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+              0 0 30px rgba(59, 130, 246, 0.5),
+              0 0 40px rgba(59, 130, 246, 0.2);
+}
+
+/* تخصيص البطاقات النيونية */
+.card-neon {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3),
+              0 0 25px rgba(59, 130, 246, 0.2),
+              0 0 35px rgba(59, 130, 246, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-neon:hover {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.5),
+              0 0 35px rgba(59, 130, 246, 0.3),
+              0 0 45px rgba(59, 130, 246, 0.2);
+}
+
+/* تخصيص الأيقونات النيونية */
+.icon-neon {
+  filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5))
+          drop-shadow(0 0 10px rgba(59, 130, 246, 0.3))
+          drop-shadow(0 0 15px rgba(59, 130, 246, 0.1));
+  transition: all 0.3s ease;
+}
+
+.icon-neon:hover {
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.8))
+          drop-shadow(0 0 15px rgba(59, 130, 246, 0.5))
+          drop-shadow(0 0 20px rgba(59, 130, 246, 0.2));
+}
+
+/* تخصيص النصوص النيونية */
+.text-neon {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5),
+               0 0 20px rgba(59, 130, 246, 0.3),
+               0 0 30px rgba(59, 130, 246, 0.1);
+  transition: all 0.3s ease;
+}
+
+.text-neon:hover {
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+               0 0 30px rgba(59, 130, 246, 0.5),
+               0 0 40px rgba(59, 130, 246, 0.2);
+}
+
+/* تخصيص الأزرار ذات التأثيرات الهولوغرامية */
+.btn-hologram {
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.8), 
+    rgba(139, 92, 246, 0.8), 
+    rgba(236, 72, 153, 0.8), 
+    rgba(59, 130, 246, 0.8));
+  background-size: 400% 400%;
+  animation: hologram 3s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-hologram::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255,255,255,0.1) 50%, 
+    transparent 70%);
+  animation: hologram-shine 2s ease infinite;
+}
+
+@keyframes hologram {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes hologram-shine {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+/* تخصيص البطاقات الهولوغرامية */
+.card-hologram {
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.1), 
+    rgba(139, 92, 246, 0.1), 
+    rgba(236, 72, 153, 0.1), 
+    rgba(59, 130, 246, 0.1));
+  background-size: 400% 400%;
+  animation: hologram 6s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hologram::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255,255,255,0.05) 50%, 
+    transparent 70%);
+  animation: hologram-shine 4s ease infinite;
+}
+
+/* تخصيص الأيقونات الهولوغرامية */
+.icon-hologram {
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.6), 
+    rgba(139, 92, 246, 0.6), 
+    rgba(236, 72, 153, 0.6), 
+    rgba(59, 130, 246, 0.6));
+  background-size: 400% 400%;
+  animation: hologram 4s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-hologram::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255,255,255,0.2) 50%, 
+    transparent 70%);
+  animation: hologram-shine 3s ease infinite;
+}
+
+/* تخصيص النصوص الهولوغرامية */
+.text-hologram {
+  background: linear-gradient(45deg, 
+    #3b82f6, 
+    #8b5cf6, 
+    #ec4899, 
+    #3b82f6);
+  background-size: 400% 400%;
+  animation: hologram 5s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+}
+
+.text-hologram::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255,255,255,0.3) 50%, 
+    transparent 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hologram-shine 4s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الكهرومغناطيسية */
+.btn-electromagnetic {
+  background: linear-gradient(45deg, 
+    #3b82f6, 
+    #8b5cf6, 
+    #ec4899);
+  background-size: 400% 400%;
+  animation: electromagnetic 2s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-electromagnetic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: electromagnetic-pulse 1.5s ease infinite;
+}
+
+@keyframes electromagnetic {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes electromagnetic-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* تخصيص البطاقات الكهرومغناطيسية */
+.card-electromagnetic {
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.2), 
+    rgba(139, 92, 246, 0.2), 
+    rgba(236, 72, 153, 0.2));
+  background-size: 400% 400%;
+  animation: electromagnetic 4s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-electromagnetic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: electromagnetic-pulse 3s ease infinite;
+}
+
+/* تخصيص الأيقونات الكهرومغناطيسية */
+.icon-electromagnetic {
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.8), 
+    rgba(139, 92, 246, 0.8), 
+    rgba(236, 72, 153, 0.8));
+  background-size: 400% 400%;
+  animation: electromagnetic 3s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-electromagnetic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: electromagnetic-pulse 2s ease infinite;
+}
+
+/* تخصيص النصوص الكهرومغناطيسية */
+.text-electromagnetic {
+  background: linear-gradient(45deg, 
+    #3b82f6, 
+    #8b5cf6, 
+    #ec4899, 
+    #3b82f6);
+  background-size: 400% 400%;
+  animation: electromagnetic 5s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+}
+
+.text-electromagnetic::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: electromagnetic-pulse 4s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الكمومية */
+.btn-quantum {
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.6) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+  animation: quantum-fluctuate 3s ease infinite;
+}
+
+.btn-quantum::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 60% 30%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 70%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: quantum-shift 2s ease infinite;
+}
+
+@keyframes quantum-fluctuate {
+  0%, 100% { 
+    background-position: 0% 0%, 100% 100%, 50% 50%;
+  }
+  33% { 
+    background-position: 100% 0%, 0% 100%, 50% 50%;
+  }
+  66% { 
+    background-position: 0% 100%, 100% 0%, 50% 50%;
+  }
+}
+
+@keyframes quantum-shift {
+  0%, 100% { 
+    background-position: 60% 30%, 40% 70%;
+  }
+  50% { 
+    background-position: 40% 70%, 60% 30%;
+  }
+}
+
+/* تخصيص البطاقات الكمومية */
+.card-quantum {
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.2) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+  animation: quantum-fluctuate 6s ease infinite;
+}
+
+.card-quantum::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 70% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 30% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: quantum-shift 4s ease infinite;
+}
+
+/* تخصيص الأيقونات الكمومية */
+.icon-quantum {
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(139, 92, 246, 0.8) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+  animation: quantum-fluctuate 4s ease infinite;
+}
+
+.icon-quantum::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: quantum-shift 3s ease infinite;
+}
+
+/* تخصيص النصوص الكمومية */
+.text-quantum {
+  background: 
+    radial-gradient(circle at 30% 20%, #3b82f6 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, #8b5cf6 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, #ec4899 0%, transparent 50%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: quantum-fluctuate 5s ease infinite;
+}
+
+.text-quantum::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 60% 30%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 40% 70%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: quantum-shift 4s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الكونية */
+.btn-cosmic {
+  background: 
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.9) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='1' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='20' cy='20' r='0.5' fill='%23ffffff' opacity='0.3'/%3E%3Ccircle cx='80' cy='80' r='0.7' fill='%23ffffff' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: cover, 200px 200px;
+  animation: cosmic-rotate 10s linear infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-cosmic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  animation: cosmic-twinkle 3s ease infinite;
+}
+
+@keyframes cosmic-rotate {
+  from { background-position: 0% 0%, 0% 0%; }
+  to { background-position: 0% 0%, 200px 200px; }
+}
+
+@keyframes cosmic-twinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* تخصيص البطاقات الكونية */
+.card-cosmic {
+  background: 
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.3) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='0.3' fill='%23ffffff' opacity='0.2'/%3E%3Ccircle cx='70' cy='70' r='0.5' fill='%23ffffff' opacity='0.3'/%3E%3Ccircle cx='50' cy='20' r='0.4' fill='%23ffffff' opacity='0.25'/%3E%3C/svg%3E");
+  background-size: cover, 300px 300px;
+  animation: cosmic-rotate 20s linear infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-cosmic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: cosmic-twinkle 5s ease infinite;
+}
+
+/* تخصيص الأيقونات الكونية */
+.icon-cosmic {
+  background: 
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.8) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='0.4' fill='%23ffffff' opacity='0.4'/%3E%3Ccircle cx='60' cy='60' r='0.6' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E");
+  background-size: cover, 150px 150px;
+  animation: cosmic-rotate 8s linear infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-cosmic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: cosmic-twinkle 2s ease infinite;
+}
+
+/* تخصيص النصوص الكونية */
+.text-cosmic {
+  background: 
+    radial-gradient(circle at center, #3b82f6 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='25' cy='25' r='0.3' fill='%23ffffff' opacity='0.3'/%3E%3Ccircle cx='75' cy='75' r='0.5' fill='%23ffffff' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: cover, 250px 250px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: cosmic-rotate 15s linear infinite;
+}
+
+.text-cosmic::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cosmic-twinkle 4s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الزمكانية */
+.btn-spacetime {
+  background: 
+    conic-gradient(from 0deg at 50% 50%, 
+      rgba(59, 130, 246, 0.9) 0deg, 
+      rgba(139, 92, 246, 0.9) 120deg, 
+      rgba(236, 72, 153, 0.9) 240deg, 
+      rgba(59, 130, 246, 0.9) 360deg);
+  animation: spacetime-warp 4s linear infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-spacetime::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: spacetime-distort 2s ease infinite;
+}
+
+@keyframes spacetime-warp {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spacetime-distort {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+  }
+  50% { 
+    transform: scale(1.1) rotate(180deg);
+  }
+}
+
+/* تخصيص البطاقات الزمكانية */
+.card-spacetime {
+  background: 
+    conic-gradient(from 0deg at 50% 50%, 
+      rgba(59, 130, 246, 0.3) 0deg, 
+      rgba(139, 92, 246, 0.3) 120deg, 
+      rgba(236, 72, 153, 0.3) 240deg, 
+      rgba(59, 130, 246, 0.3) 360deg);
+  animation: spacetime-warp 8s linear infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-spacetime::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: spacetime-distort 4s ease infinite;
+}
+
+/* تخصيص الأيقونات الزمكانية */
+.icon-spacetime {
+  background: 
+    conic-gradient(from 0deg at 50% 50%, 
+      rgba(59, 130, 246, 0.8) 0deg, 
+      rgba(139, 92, 246, 0.8) 120deg, 
+      rgba(236, 72, 153, 0.8) 240deg, 
+      rgba(59, 130, 246, 0.8) 360deg);
+  animation: spacetime-warp 6s linear infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-spacetime::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: spacetime-distort 3s ease infinite;
+}
+
+/* تخصيص النصوص الزمكانية */
+.text-spacetime {
+  background: 
+    conic-gradient(from 0deg at 50% 50%, 
+      #3b82f6 0deg, 
+      #8b5cf6 120deg, 
+      #ec4899 240deg, 
+      #3b82f6 360deg);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: spacetime-warp 10s linear infinite;
+}
+
+.text-spacetime::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: spacetime-distort 5s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الأبعادية */
+.btn-dimensional {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.9) 0%, 
+      transparent 50%, 
+      rgba(139, 92, 246, 0.9) 100%),
+    linear-gradient(135deg, 
+      rgba(236, 72, 153, 0.9) 0%, 
+      transparent 50%, 
+      rgba(59, 130, 246, 0.9) 100%);
+  background-size: 200% 200%;
+  animation: dimensional-shift 3s ease infinite;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.btn-dimensional::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, 
+      rgba(255,255,255,0.2) 0%, 
+      transparent 50%, 
+      rgba(255,255,255,0.2) 100%);
+  animation: dimensional-glimmer 2s ease infinite;
+  transform: translateZ(20px);
+}
+
+@keyframes dimensional-shift {
+  0%, 100% { background-position: 0% 0%, 100% 100%; }
+  50% { background-position: 100% 100%, 0% 0%; }
+}
+
+@keyframes dimensional-glimmer {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* تخصيص البطاقات الأبعادية */
+.card-dimensional {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.3) 0%, 
+      transparent 50%, 
+      rgba(139, 92, 246, 0.3) 100%),
+    linear-gradient(135deg, 
+      rgba(236, 72, 153, 0.3) 0%, 
+      transparent 50%, 
+      rgba(59, 130, 246, 0.3) 100%);
+  background-size: 200% 200%;
+  animation: dimensional-shift 6s ease infinite;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-dimensional::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, 
+      rgba(255,255,255,0.1) 0%, 
+      transparent 50%, 
+      rgba(255,255,255,0.1) 100%);
+  animation: dimensional-glimmer 4s ease infinite;
+  transform: translateZ(10px);
+}
+
+/* تخصيص الأيقونات الأبعادية */
+.icon-dimensional {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.8) 0%, 
+      transparent 50%, 
+      rgba(139, 92, 246, 0.8) 100%),
+    linear-gradient(135deg, 
+      rgba(236, 72, 153, 0.8) 0%, 
+      transparent 50%, 
+      rgba(59, 130, 246, 0.8) 100%);
+  background-size: 200% 200%;
+  animation: dimensional-shift 4s ease infinite;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.icon-dimensional::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, 
+      rgba(255,255,255,0.3) 0%, 
+      transparent 50%, 
+      rgba(255,255,255,0.3) 100%);
+  animation: dimensional-glimmer 3s ease infinite;
+  transform: translateZ(15px);
+}
+
+/* تخصيص النصوص الأبعادية */
+.text-dimensional {
+  background: 
+    linear-gradient(45deg, 
+      #3b82f6 0%, 
+      transparent 50%, 
+      #8b5cf6 100%),
+    linear-gradient(135deg, 
+      #ec4899 0%, 
+      transparent 50%, 
+      #3b82f6 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: dimensional-shift 5s ease infinite;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.text-dimensional::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, 
+      rgba(255,255,255,0.4) 0%, 
+      transparent 50%, 
+      rgba(255,255,255,0.4) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: dimensional-glimmer 4s ease infinite;
+  transform: translateZ(5px);
+}
+
+/* تخصيص الأزرار ذات التأثيرات السريالية */
+.btn-surreal {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20,20 Q50,0 80,20 T100,50 T80,80 T50,100 T20,80 T0,50 T20,20 Z' fill='%233b82f6' opacity='0.8'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30,30 Q50,10 70,30 T90,50 T70,70 T50,90 T30,70 T10,50 T30,30 Z' fill='%238b5cf6' opacity='0.6'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40,40 Q50,20 60,40 T80,50 T60,60 T50,80 T40,60 T20,50 T40,40 Z' fill='%23ec4899' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 100px 100px, 80px 80px, 60px 60px;
+  animation: surreal-drift 8s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-surreal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  animation: surreal-pulse 4s ease infinite;
+}
+
+@keyframes surreal-drift {
+  0%, 100% { 
+    background-position: 0% 0%, 20% 20%, 40% 40%;
+  }
+  33% { 
+    background-position: 100% 100%, 80% 80%, 60% 60%;
+  }
+  66% { 
+    background-position: 0% 100%, 20% 80%, 40% 60%;
+  }
+}
+
+@keyframes surreal-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* تخصيص البطاقات السريالية */
+.card-surreal {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25,25 Q50,5 75,25 T95,50 T75,75 T50,95 T25,75 T5,50 T25,25 Z' fill='%233b82f6' opacity='0.3'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M35,35 Q50,15 65,35 T85,50 T65,65 T50,85 T35,65 T15,50 T35,35 Z' fill='%238b5cf6' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: 150px 150px, 120px 120px;
+  animation: surreal-drift 12s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-surreal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: surreal-pulse 6s ease infinite;
+}
+
+/* تخصيص الأيقونات السريالية */
+.icon-surreal {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30,30 Q50,10 70,30 T90,50 T70,70 T50,90 T30,70 T10,50 T30,30 Z' fill='%233b82f6' opacity='0.6'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40,40 Q50,20 60,40 T80,50 T60,60 T50,80 T40,60 T20,50 T40,40 Z' fill='%238b5cf6' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 80px 80px, 60px 60px;
+  animation: surreal-drift 10s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-surreal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: surreal-pulse 5s ease infinite;
+}
+
+/* تخصيص النصوص السريالية */
+.text-surreal {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20,20 Q50,0 80,20 T100,50 T80,80 T50,100 T20,80 T0,50 T20,20 Z' fill='%233b82f6' opacity='0.8'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30,30 Q50,10 70,30 T90,50 T70,70 T50,90 T30,70 T10,50 T30,30 Z' fill='%238b5cf6' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 120px 120px, 100px 100px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: surreal-drift 15s ease infinite;
+}
+
+.text-surreal::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: surreal-pulse 8s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات المستقبلية */
+.btn-futuristic {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.9) 0%, 
+      rgba(59, 130, 246, 0.7) 25%, 
+      rgba(139, 92, 246, 0.7) 50%, 
+      rgba(139, 92, 246, 0.9) 75%, 
+      rgba(59, 130, 246, 0.9) 100%);
+  background-size: 200% 200%;
+  animation: futuristic-scan 2s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.5),
+    inset 0 0 20px rgba(255,255,255,0.1);
+}
+
+.btn-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: futuristic-glow 3s ease infinite;
+}
+
+@keyframes futuristic-scan {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 200%; }
+}
+
+@keyframes futuristic-glow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* تخصيص البطاقات المستقبلية */
+.card-futuristic {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.3) 0%, 
+      rgba(59, 130, 246, 0.2) 25%, 
+      rgba(139, 92, 246, 0.2) 50%, 
+      rgba(139, 92, 246, 0.3) 75%, 
+      rgba(59, 130, 246, 0.3) 100%);
+  background-size: 200% 200%;
+  animation: futuristic-scan 4s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.3),
+    inset 0 0 30px rgba(255,255,255,0.05);
+}
+
+.card-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  animation: futuristic-glow 6s ease infinite;
+}
+
+/* تخصيص الأيقونات المستقبلية */
+.icon-futuristic {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.8) 0%, 
+      rgba(59, 130, 246, 0.6) 25%, 
+      rgba(139, 92, 246, 0.6) 50%, 
+      rgba(139, 92, 246, 0.8) 75%, 
+      rgba(59, 130, 246, 0.8) 100%);
+  background-size: 200% 200%;
+  animation: futuristic-scan 3s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.4),
+    inset 0 0 15px rgba(255,255,255,0.2);
+}
+
+.icon-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: futuristic-glow 4s ease infinite;
+}
+
+/* تخصيص النصوص المستقبلية */
+.text-futuristic {
+  background: 
+    linear-gradient(45deg, 
+      #3b82f6 0%, 
+      #3b82f6 25%, 
+      #8b5cf6 50%, 
+      #8b5cf6 75%, 
+      #3b82f6 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: futuristic-scan 5s linear infinite;
+  text-shadow: 
+    0 0 10px rgba(59, 130, 246, 0.5),
+    0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.text-futuristic::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: futuristic-glow 7s ease infinite;
+}
+
+/* تخصيص الأزرار ذات التأثيرات السايبربانك */
+.btn-cyberpunk {
+  background: 
+    linear-gradient(45deg, 
+      #ff0080 0%, 
+      #ff8c00 25%, 
+      #40e0d0 50%, 
+      #ff0080 75%, 
+      #ff8c00 100%);
+  background-size: 200% 200%;
+  animation: cyberpunk-glitch 0.5s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #00ffff;
+  box-shadow: 
+    0 0 10px #ff0080,
+    0 0 20px #00ffff,
+    inset 0 0 10px #ff0080;
+  color: #00ffff;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.btn-cyberpunk::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+  animation: cyberpunk-scan 2s linear infinite;
+}
+
+.btn-cyberpunk::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
+  background: 
+    radial-gradient(circle, rgba(255, 0, 128, 0.2) 0%, transparent 50%),
+    radial-gradient(circle, rgba(0, 255, 255, 0.2) 50%, transparent 100%);
+  animation: cyberpunk-pulse 1s ease infinite;
+  z-index: -1;
+}
+
+@keyframes cyberpunk-glitch {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+}
+
+@keyframes cyberpunk-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes cyberpunk-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* تخصيص البطاقات السايبربانك */
+.card-cyberpunk {
+  background: 
+    linear-gradient(45deg, 
+      rgba(255, 0, 128, 0.2) 0%, 
+      rgba(255, 140, 0, 0.2) 25%, 
+      rgba(64, 224, 208, 0.2) 50%, 
+      rgba(255, 0, 128, 0.2) 75%, 
+      rgba(255, 140, 0, 0.2) 100%);
+  background-size: 200% 200%;
+  animation: cyberpunk-glitch 1s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #00ffff;
+  box-shadow: 
+    0 0 15px rgba(255, 0, 128, 0.5),
+    0 0 25px rgba(0, 255, 255, 0.3),
+    inset 0 0 15px rgba(255, 0, 128, 0.3);
+}
+
+.card-cyberpunk::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+  animation: cyberpunk-scan 4s linear infinite;
+}
+
+.card-cyberpunk::after {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  right: -5%;
+  bottom: -5%;
+  background: 
+    radial-gradient(circle, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+    radial-gradient(circle, rgba(0, 255, 255, 0.1) 50%, transparent 100%);
+  animation: cyberpunk-pulse 2s ease infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأيقونات السايبربانك */
+.icon-cyberpunk {
+  background: 
+    linear-gradient(45deg, 
+      rgba(255, 0, 128, 0.8) 0%, 
+      rgba(255, 140, 0, 0.8) 25%, 
+      rgba(64, 224, 208, 0.8) 50%, 
+      rgba(255, 0, 128, 0.8) 75%, 
+      rgba(255, 140, 0, 0.8) 100%);
+  background-size: 200% 200%;
+  animation: cyberpunk-glitch 0.8s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #00ffff;
+  box-shadow: 
+    0 0 8px rgba(255, 0, 128, 0.6),
+    0 0 16px rgba(0, 255, 255, 0.4),
+    inset 0 0 8px rgba(255, 0, 128, 0.4);
+}
+
+.icon-cyberpunk::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+  animation: cyberpunk-scan 3s linear infinite;
+}
+
+.icon-cyberpunk::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: -8%;
+  right: -8%;
+  bottom: -8%;
+  background: 
+    radial-gradient(circle, rgba(255, 0, 128, 0.3) 0%, transparent 50%),
+    radial-gradient(circle, rgba(0, 255, 255, 0.3) 50%, transparent 100%);
+  animation: cyberpunk-pulse 1.5s ease infinite;
+  z-index: -1;
+}
+
+/* تخصيص النصوص السايبربانك */
+.text-cyberpunk {
+  background: 
+    linear-gradient(45deg, 
+      #ff0080 0%, 
+      #ff8c00 25%, 
+      #40e0d0 50%, 
+      #ff0080 75%, 
+      #ff8c00 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: cyberpunk-glitch 0.6s linear infinite;
+  text-shadow: 
+    0 0 5px #ff0080,
+    0 0 10px #00ffff,
+    0 0 15px #ff0080;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.text-cyberpunk::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 2px;
+  left: -2px;
+  right: 2px;
+  bottom: -2px;
+  background: 
+    linear-gradient(45deg, 
+      #00ffff 0%, 
+      transparent 25%, 
+      #ff0080 50%, 
+      transparent 75%, 
+      #00ffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cyberpunk-glitch 0.3s linear infinite;
+  z-index: -1;
+}
+
+.text-cyberpunk::after {
+  content: attr(data-text);
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  right: -2px;
+  bottom: 2px;
+  background: 
+    linear-gradient(45deg, 
+      #ff0080 0%, 
+      transparent 25%, 
+      #00ffff 50%, 
+      transparent 75%, 
+      #ff0080 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cyberpunk-glitch 0.4s linear infinite reverse;
+  z-index: -2;
+}
+
+/* تخصيص الأزرار ذات التأثيرات النيونية المتقدمة */
+.btn-neon-advanced {
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255, 0, 128, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(0, 255, 255, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 140, 0, 0.6) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 
+    0 0 10px rgba(255, 0, 128, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.5),
+    0 0 30px rgba(255, 140, 0, 0.5),
+    inset 0 0 10px rgba(255, 0, 128, 0.3),
+    inset 0 0 20px rgba(0, 255, 255, 0.3),
+    inset 0 0 30px rgba(255, 140, 0, 0.3);
+  animation: neon-advanced-pulse 2s ease infinite;
+}
+
+.btn-neon-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: neon-advanced-scan 3s linear infinite;
+}
+
+.btn-neon-advanced::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 0, 128, 0.3) 0deg, 
+      rgba(0, 255, 255, 0.3) 120deg, 
+      rgba(255, 140, 0, 0.3) 240deg, 
+      rgba(255, 0, 128, 0.3) 360deg);
+  animation: neon-advanced-rotate 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes neon-advanced-pulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 10px rgba(255, 0, 128, 0.5),
+      0 0 20px rgba(0, 255, 255, 0.5),
+      0 0 30px rgba(255, 140, 0, 0.5),
+      inset 0 0 10px rgba(255, 0, 128, 0.3),
+      inset 0 0 20px rgba(0, 255, 255, 0.3),
+      inset 0 0 30px rgba(255, 140, 0, 0.3);
+  }
+  50% { 
+    box-shadow: 
+      0 0 20px rgba(255, 0, 128, 0.8),
+      0 0 40px rgba(0, 255, 255, 0.8),
+      0 0 60px rgba(255, 140, 0, 0.8),
+      inset 0 0 20px rgba(255, 0, 128, 0.5),
+      inset 0 0 40px rgba(0, 255, 255, 0.5),
+      inset 0 0 60px rgba(255, 140, 0, 0.5);
+  }
+}
+
+@keyframes neon-advanced-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes neon-advanced-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* تخصيص البطاقات النيونية المتقدمة */
+.card-neon-advanced {
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 0, 128, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 140, 0, 0.2) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 15px rgba(255, 0, 128, 0.3),
+    0 0 25px rgba(0, 255, 255, 0.3),
+    0 0 35px rgba(255, 140, 0, 0.3),
+    inset 0 0 15px rgba(255, 0, 128, 0.2),
+    inset 0 0 25px rgba(0, 255, 255, 0.2),
+    inset 0 0 35px rgba(255, 140, 0, 0.2);
+  animation: neon-advanced-pulse 3s ease infinite;
+}
+
+.card-neon-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: neon-advanced-scan 6s linear infinite;
+}
+
+.card-neon-advanced::after {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  right: -5%;
+  bottom: -5%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 0, 128, 0.2) 0deg, 
+      rgba(0, 255, 255, 0.2) 120deg, 
+      rgba(255, 140, 0, 0.2) 240deg, 
+      rgba(255, 0, 128, 0.2) 360deg);
+  animation: neon-advanced-rotate 8s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأيقونات النيونية المتقدمة */
+.icon-neon-advanced {
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255, 0, 128, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(0, 255, 255, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 140, 0, 0.6) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 8px rgba(255, 0, 128, 0.4),
+    0 0 16px rgba(0, 255, 255, 0.4),
+    0 0 24px rgba(255, 140, 0, 0.4),
+    inset 0 0 8px rgba(255, 0, 128, 0.3),
+    inset 0 0 16px rgba(0, 255, 255, 0.3),
+    inset 0 0 24px rgba(255, 140, 0, 0.3);
+  animation: neon-advanced-pulse 2.5s ease infinite;
+}
+
+.icon-neon-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: neon-advanced-scan 4s linear infinite;
+}
+
+.icon-neon-advanced::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: -8%;
+  right: -8%;
+  bottom: -8%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 0, 128, 0.4) 0deg, 
+      rgba(0, 255, 255, 0.4) 120deg, 
+      rgba(255, 140, 0, 0.4) 240deg, 
+      rgba(255, 0, 128, 0.4) 360deg);
+  animation: neon-advanced-rotate 6s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص النصوص النيونية المتقدمة */
+.text-neon-advanced {
+  background: 
+    radial-gradient(circle at 30% 20%, #ff0080 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, #00ffff 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, #ff8c00 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  text-shadow: 
+    0 0 5px #ff0080,
+    0 0 10px #00ffff,
+    0 0 15px #ff8c00,
+    0 0 20px #ff0080,
+    0 0 35px #00ffff,
+    0 0 40px #ff8c00;
+  animation: neon-advanced-pulse 2s ease infinite;
+}
+
+.text-neon-advanced::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: neon-advanced-scan 5s linear infinite;
+}
+
+.text-neon-advanced::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 0, 128, 0.3) 0deg, 
+      rgba(0, 255, 255, 0.3) 120deg, 
+      rgba(255, 140, 0, 0.3) 240deg, 
+      rgba(255, 0, 128, 0.3) 360deg);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: neon-advanced-rotate 7s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الكمومية المتقدمة */
+.btn-quantum-advanced {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='5'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='10'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%233b82f6' filter='url(%23quantum)' opacity='0.8'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='5'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%238b5cf6' filter='url(%23quantum2)' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 200px 200px, 150px 150px;
+  animation: quantum-advanced-fluctuate 10s ease infinite;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.5),
+    0 0 40px rgba(139, 92, 246, 0.3),
+    inset 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.btn-quantum-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  animation: quantum-advanced-pulse 3s ease infinite;
+}
+
+.btn-quantum-advanced::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.4) 0deg, 
+      rgba(139, 92, 246, 0.4) 120deg, 
+      rgba(236, 72, 153, 0.4) 240deg, 
+      rgba(59, 130, 246, 0.4) 360deg);
+  animation: quantum-advanced-rotate 5s linear infinite;
+  z-index: -1;
+}
+
+@keyframes quantum-advanced-fluctuate {
+  0%, 100% { 
+    background-position: 0% 0%, 100% 100%;
+    filter: hue-rotate(0deg);
+  }
+  33% { 
+    background-position: 100% 0%, 0% 100%;
+    filter: hue-rotate(120deg);
+  }
+  66% { 
+    background-position: 0% 100%, 100% 0%;
+    filter: hue-rotate(240deg);
+  }
+}
+
+@keyframes quantum-advanced-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes quantum-advanced-rotate {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(360deg) scale(1.2); }
+}
+
+/* تخصيص البطاقات الكمومية المتقدمة */
+.card-quantum-advanced {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum3'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='5'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='5'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%233b82f6' filter='url(%23quantum3)' opacity='0.3'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum4'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%238b5cf6' filter='url(%23quantum4)' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: 300px 300px, 250px 250px;
+  animation: quantum-advanced-fluctuate 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.3),
+    0 0 50px rgba(139, 92, 246, 0.2),
+    inset 0 0 30px rgba(59, 130, 246, 0.2);
+}
+
+.card-quantum-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: quantum-advanced-pulse 6s ease infinite;
+}
+
+.card-quantum-advanced::after {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  right: -5%;
+  bottom: -5%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.2) 0deg, 
+      rgba(139, 92, 246, 0.2) 120deg, 
+      rgba(236, 72, 153, 0.2) 240deg, 
+      rgba(59, 130, 246, 0.2) 360deg);
+  animation: quantum-advanced-rotate 10s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأيقونات الكمومية المتقدمة */
+.icon-quantum-advanced {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum5'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='5'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='8'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%233b82f6' filter='url(%23quantum5)' opacity='0.6'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum6'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='4'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%238b5cf6' filter='url(%23quantum6)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 120px 120px, 100px 100px;
+  animation: quantum-advanced-fluctuate 8s ease infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.4),
+    0 0 25px rgba(139, 92, 246, 0.3),
+    inset 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+.icon-quantum-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: quantum-advanced-pulse 4s ease infinite;
+}
+
+.icon-quantum-advanced::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: -8%;
+  right: -8%;
+  bottom: -8%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.3) 0deg, 
+      rgba(139, 92, 246, 0.3) 120deg, 
+      rgba(236, 72, 153, 0.3) 240deg, 
+      rgba(59, 130, 246, 0.3) 360deg);
+  animation: quantum-advanced-rotate 7s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص النصوص الكمومية المتقدمة */
+.text-quantum-advanced {
+  background: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='quantum7'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='5'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='5'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%233b82f6' filter='url(%23quantum7)' opacity='0.8'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: quantum-advanced-fluctuate 12s ease infinite;
+  text-shadow: 
+    0 0 10px rgba(59, 130, 246, 0.5),
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 30px rgba(236, 72, 153, 0.2);
+}
+
+.text-quantum-advanced::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: quantum-advanced-pulse 5s ease infinite;
+}
+
+.text-quantum-advanced::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.3) 0deg, 
+      rgba(139, 92, 246, 0.3) 120deg, 
+      rgba(236, 72, 153, 0.3) 240deg, 
+      rgba(59, 130, 246, 0.3) 360deg);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: quantum-advanced-rotate 9s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأزرار ذات التأثيرات الكونية المتقدمة */
+.btn-cosmic-advanced {
+  background: 
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.9) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='1' fill='%23ffffff' opacity='0.8'/%3E%3Ccircle cx='20' cy='20' r='0.5' fill='%23ffffff' opacity='0.6'/%3E%3Ccircle cx='80' cy='80' r='0.7' fill='%23ffffff' opacity='0.7'/%3E%3Ccircle cx='30' cy='70' r='0.3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='70' cy='30' r='0.4' fill='%23ffffff' opacity='0.6'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='cosmic'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='2'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%238b5cf6' filter='url(%23cosmic)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: cover, 150px 150px, 100px 100px;
+  animation: cosmic-advanced-rotate 15s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.6),
+    0 0 40px rgba(139, 92, 246, 0.4),
+    inset 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-cosmic-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: cosmic-advanced-twinkle 4s ease infinite;
+}
+
+.btn-cosmic-advanced::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.5) 0deg, 
+      rgba(139, 92, 246, 0.5) 120deg, 
+      rgba(236, 72, 153, 0.5) 240deg, 
+      rgba(59, 130, 246, 0.5) 360deg);
+  animation: cosmic-advanced-warp 8s linear infinite;
+  z-index: -1;
+}
+
+@keyframes cosmic-advanced-rotate {
+  from { background-position: 0% 0%, 0% 0%, 0% 0%; }
+  to { background-position: 0% 0%, 150px 150px, 100px 100px; }
+}
+
+@keyframes cosmic-advanced-twinkle {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes cosmic-advanced-warp {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(360deg) scale(1.1); }
+}
+
+/* تخصيص البطاقات الكونية المتقدمة */
+.card-cosmic-advanced {
+  background: 
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.4) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='0.4' fill='%23ffffff' opacity='0.4'/%3E%3Ccircle cx='60' cy='60' r='0.6' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='25' cy='75' r='0.3' fill='%23ffffff' opacity='0.3'/%3E%3Ccircle cx='75' cy='25' r='0.5' fill='%23ffffff' opacity='0.4'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='cosmic2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%238b5cf6' filter='url(%23cosmic2)' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: cover, 200px 200px, 150px 150px;
+  animation: cosmic-advanced-rotate 25s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.4),
+    0 0 50px rgba(139, 92, 246, 0.3),
+    inset 0 0 30px rgba(59, 130, 246, 0.3);
+}
+
+.card-cosmic-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  animation: cosmic-advanced-twinkle 8s ease infinite;
+}
+
+.card-cosmic-advanced::after {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  right: -5%;
+  bottom: -5%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.3) 0deg, 
+      rgba(139, 92, 246, 0.3) 120deg, 
+      rgba(236, 72, 153, 0.3) 240deg, 
+      rgba(59, 130, 246, 0.3) 360deg);
+  animation: cosmic-advanced-warp 15s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأيقونات الكونية المتقدمة */
+.icon-cosmic-advanced {
+  background: 
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.8) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='45' cy='45' r='0.5' fill='%23ffffff' opacity='0.6'/%3E%3Ccircle cx='55' cy='55' r='0.7' fill='%23ffffff' opacity='0.7'/%3E%3Ccircle cx='35' cy='65' r='0.4' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='cosmic3'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='%238b5cf6' filter='url(%23cosmic3)' opacity='0.3'/%3E%3C/svg%3E");
+  background-size: cover, 120px 120px, 80px 80px;
+  animation: cosmic-advanced-rotate 12s linear infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.5),
+    0 0 25px rgba(139, 92, 246, 0.4),
+    inset 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+.icon-cosmic-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: cosmic-advanced-twinkle 6s ease infinite;
+}
+
+.icon-cosmic-advanced::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: -8%;
+  right: -8%;
+  bottom: -8%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.4) 0deg, 
+      rgba(139, 92, 246, 0.4) 120deg, 
+      rgba(236, 72, 153, 0.4) 240deg, 
+      rgba(59, 130, 246, 0.4) 360deg);
+  animation: cosmic-advanced-warp 10s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص النصوص الكونية المتقدمة */
+.text-cosmic-advanced {
+  background: 
+    radial-gradient(circle at center, #3b82f6 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='0.6' fill='%23ffffff' opacity='0.7'/%3E%3Ccircle cx='30' cy='30' r='0.4' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='70' cy='70' r='0.5' fill='%23ffffff' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: cover, 180px 180px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: cosmic-advanced-rotate 20s linear infinite;
+  text-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.6),
+    0 0 25px rgba(139, 92, 246, 0.4),
+    0 0 35px rgba(236, 72, 153, 0.3);
+}
+
+.text-cosmic-advanced::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cosmic-advanced-twinkle 7s ease infinite;
+}
+
+.text-cosmic-advanced::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(59, 130, 246, 0.3) 0deg, 
+      rgba(139, 92, 246, 0.3) 120deg, 
+      rgba(236, 72, 153, 0.3) 240deg, 
+      rgba(59, 130, 246, 0.3) 360deg);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cosmic-advanced-warp 12s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأزرار ذات التأثيرات السحرية */
+.btn-magical {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.9) 0%, 
+      rgba(139, 92, 246, 0.9) 25%, 
+      rgba(236, 72, 153, 0.9) 50%, 
+      rgba(59, 130, 246, 0.9) 75%, 
+      rgba(139, 92, 246, 0.9) 100%);
+  background-size: 200% 200%;
+  animation: magical-sparkle 3s ease infinite;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.6),
+    0 0 40px rgba(139, 92, 246, 0.4),
+    0 0 60px rgba(236, 72, 153, 0.3),
+    inset 0 0 20px rgba(59, 130, 246, 0.4),
+    inset 0 0 40px rgba(139, 92, 246, 0.3),
+    inset 0 0 60px rgba(236, 72, 153, 0.2);
+}
+
+.btn-magical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: magical-glimmer 2s ease infinite;
+}
+
+.btn-magical::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 255, 255, 0.1) 0deg, 
+      transparent 90deg, 
+      rgba(255, 255, 255, 0.1) 180deg, 
+      transparent 270deg, 
+      rgba(255, 255, 255, 0.1) 360deg);
+  animation: magical-rotate 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes magical-sparkle {
+  0%, 100% { 
+    background-position: 0% 0%;
+    filter: hue-rotate(0deg);
+  }
+  50% { 
+    background-position: 100% 100%;
+    filter: hue-rotate(180deg);
+  }
+}
+
+@keyframes magical-glimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes magical-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* تخصيص البطاقات السحرية */
+.card-magical {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.3) 0%, 
+      rgba(139, 92, 246, 0.3) 25%, 
+      rgba(236, 72, 153, 0.3) 50%, 
+      rgba(59, 130, 246, 0.3) 75%, 
+      rgba(139, 92, 246, 0.3) 100%);
+  background-size: 200% 200%;
+  animation: magical-sparkle 6s ease infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.4),
+    0 0 50px rgba(139, 92, 246, 0.3),
+    0 0 70px rgba(236, 72, 153, 0.2),
+    inset 0 0 30px rgba(59, 130, 246, 0.3),
+    inset 0 0 50px rgba(139, 92, 246, 0.2),
+    inset 0 0 70px rgba(236, 72, 153, 0.1);
+}
+
+.card-magical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  animation: magical-glimmer 4s ease infinite;
+}
+
+.card-magical::after {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  right: -5%;
+  bottom: -5%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 255, 255, 0.05) 0deg, 
+      transparent 90deg, 
+      rgba(255, 255, 255, 0.05) 180deg, 
+      transparent 270deg, 
+      rgba(255, 255, 255, 0.05) 360deg);
+  animation: magical-rotate 8s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص الأيقونات السحرية */
+.icon-magical {
+  background: 
+    linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.8) 0%, 
+      rgba(139, 92, 246, 0.8) 25%, 
+      rgba(236, 72, 153, 0.8) 50%, 
+      rgba(59, 130, 246, 0.8) 75%, 
+      rgba(139, 92, 246, 0.8) 100%);
+  background-size: 200% 200%;
+  animation: magical-sparkle 4s ease infinite;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.5),
+    0 0 25px rgba(139, 92, 246, 0.4),
+    0 0 35px rgba(236, 72, 153, 0.3),
+    inset 0 0 15px rgba(59, 130, 246, 0.4),
+    inset 0 0 25px rgba(139, 92, 246, 0.3),
+    inset 0 0 35px rgba(236, 72, 153, 0.2);
+}
+
+.icon-magical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%);
+  animation: magical-glimmer 3s ease infinite;
+}
+
+.icon-magical::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: -8%;
+  right: -8%;
+  bottom: -8%;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 255, 255, 0.1) 0deg, 
+      transparent 90deg, 
+      rgba(255, 255, 255, 0.1) 180deg, 
+      transparent 270deg, 
+      rgba(255, 255, 255, 0.1) 360deg);
+  animation: magical-rotate 6s linear infinite;
+  z-index: -1;
+}
+
+/* تخصيص النصوص السحرية */
+.text-magical {
+  background: 
+    linear-gradient(45deg, 
+      #3b82f6 0%, 
+      #8b5cf6 25%, 
+      #ec4899 50%, 
+      #3b82f6 75%, 
+      #8b5cf6 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  animation: magical-sparkle 5s ease infinite;
+  text-shadow: 
+    0 0 10px rgba(59, 130, 246, 0.6),
+    0 0 20px rgba(139, 92, 246, 0.4),
+    0 0 30px rgba(236, 72, 153, 0.3);
+}
+
+.text-magical::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.4) 0%, transparent 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: magical-glimmer 4s ease infinite;
+}
+
+.text-magical::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    conic-gradient(from 0deg, 
+      rgba(255, 255, 255, 0.1) 0deg, 
+      transparent 90deg, 
+      rgba(255, 255, 255, 0.1) 180deg, 
+      transparent 270deg, 
+      rgba(255, 255, 255, 0.1) 360deg);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: magical-rotate 7s linear infinite;
+  z-index: -1;
+}
