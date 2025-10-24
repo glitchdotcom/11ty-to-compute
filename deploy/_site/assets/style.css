@@ -1,0 +1,171 @@
+/* A set of default style */
+:root {
+  /* Generic sizing for the page */
+  --wrapper-height: 75vh;
+  --avatar-max-width: 140px;
+
+  /* Fonts for different elements */
+  --font-family: sans-serif;
+  --font-family-header: sans-serif;
+  --font-family-list: monospace;
+
+  /* Colors you'll see cascade through the elements */
+  --color-bg: #fef1f0; /* Used for the page body background */
+  --color-bg-alt: #ffffff; /* Used for social icons on hover */
+  --color-text-main: #000000; /* List text ann social icons on hover */
+  --color-primary: #ba160a; /* Headers and borders */
+  --color-header: #fcc9c5;
+}
+
+/* Basic page style resets */
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+
+/* Page structure */
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  text-align: center;
+  margin: 0;
+}
+.wrapper {
+  min-height: var(--wrapper-height);
+  place-items: center;
+  margin: 1rem 2rem;
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  max-width: 550px;
+  margin: 0 auto;
+}
+
+/* Typography */
+p {
+  margin: 0 0 1rem 0;
+  line-height: 1.5 !important;
+}
+h1,
+h2,
+h3,
+h4,
+h5 {
+  color: var(--color-text-main);
+}
+h1 {
+  display: inline-flex;
+  color: var(--color-primary);
+  justify-content: center;
+}
+header {
+	border-bottom: 1px dashed var(--color-gray-20);
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 2rem;
+}
+a.home-link:link, footer a:link {
+	font-weight: 600;
+}
+header a:not(.home-link){
+  font-weight: normal;
+  border-bottom-width: 2px;
+}
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.nav-item {
+	display: inline-block;
+}
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Link styles */
+a:link,
+a:visited {
+  text-decoration: none;
+  border-bottom: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  transition: background 0.2s linear;
+  font-weight: 500;
+}
+a:hover,
+a:active,
+a:focus, a.remix:hover {
+  background: var(--color-primary);
+  color:var(--color-bg);
+}
+h1,
+h2,
+p {
+  display: block;
+  text-align: left;
+}
+p, ul {
+  font-weight: 200;
+}
+
+header {
+  text-align: left;
+  margin-bottom: 1rem;
+  background-color: var(--color-header);
+}
+
+header div {
+  margin-bottom: 0;
+}
+.illo-container {
+  display: flex;
+  justify-content: flex-end;
+}
+.illustration {
+  max-height: var(--avatar-max-width);
+  margin: 1rem 2rem 0 0;
+  transform: rotate(10deg);
+}
+ul > li,
+ol > li {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+ul {
+  padding: 0 0 0 18px;
+  margin: 0;
+  text-align: left;
+}
+ul.no-bullet {
+  list-style-type: none;
+}
+/* Navigation grid */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  margin: 2rem auto 0;
+  padding: 1.5rem;
+  width: 100%;
+  flex-wrap: wrap;
+  background-color: var(--color-header);
+  display: flex;
+  justify-content: flex-end;
+}
+a.remix {
+  background-color: var(--color-bg-alt);
+  border: 2px solid var(--color-text-main);
+  border-radius: 5px;
+  padding:0.5rem;
+}
