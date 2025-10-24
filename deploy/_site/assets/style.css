@@ -160,7 +160,7 @@ ul.no-bullet {
   width: 100%;
   flex-wrap: wrap;
   background-color: var(--color-header);
-  display: flex;
+  
   justify-content: flex-end;
 }
 a.remix {
