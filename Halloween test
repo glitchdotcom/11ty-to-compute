@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Covarde ☠️</title>
+<style>
+  body {
+    background-color: #1a0000;
+    color: #ff0000;
+    font-family: 'Creepster', sans-serif;
+    text-align: center;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    animation: pulse 1s infinite alternate;
+    text-shadow: 0 0 25px #ff0000;
+  }
+  @keyframes pulse {
+    from {opacity: 0.5;}
+    to {opacity: 1;}
+  }
+</style>
+</head>
+<body>
+  <p>Então você vai arregar, seu vacilão? ☠️</p>
+  <audio autoplay>
+    <source src="https://www.soundjay.com/human/sounds/scream-01.mp3" type="audio/mpeg">
+  </audio>
+</body>
+</html>
