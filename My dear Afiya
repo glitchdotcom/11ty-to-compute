@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Happy Birthday Afiya 🎉</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#ff6b81;--soft:#f8fafc}
+    *{box-sizing:border-box;font-family: 'Segoe UI', Roboto, Arial, sans-serif}
+    body{margin:0;min-height:100vh;background: radial-gradient(circle at 10% 10%, #0b1330 0%, #071024 30%, #02040a 100%);color:var(--soft);display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{max-width:920px;width:100%;display:grid;grid-template-columns:1fr 380px;gap:28px}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:22px;border-radius:16px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .left{padding:28px}
+    h1{margin:0 0 6px;font-size:28px}
+    p.lead{margin:0 0 18px;opacity:0.9}
+    .card{background:rgba(255,255,255,0.03);padding:16px;border-radius:12px}
+    .input{display:flex;gap:8px;margin:12px 0}
+    input[type=text]{flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--soft);outline:none}
+    button{background:linear-gradient(90deg,var(--accent),#ff9aa2);border:0;padding:10px 14px;border-radius:10px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 8px 20px rgba(255,107,129,0.12);}
+    .note{font-size:13px;opacity:0.8;margin-top:8px}
+    .preview{margin-top:18px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));min-height:160px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+    .gift-title{font-size:22px;margin:0 0 8px}
+    .gift-msg{white-space:pre-wrap;opacity:0.95}
+
+    .right{padding:28px;display:flex;flex-direction:column;gap:14px}
+    .small{font-size:13px;opacity:0.9}
+
+    /* Overlay when opened */
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;visibility:hidden;opacity:0;transition:opacity .35s,visibility .35s}
+    .overlay.show{visibility:visible;opacity:1}
+    .modal{width:90%;max-width:760px;background:linear-gradient(180deg,#081224, #07102a);border-radius:18px;padding:26px;box-shadow:0 20px 60px rgba(3,10,30,0.7);transform:translateY(8px)}
+    .modal h2{margin:0 0 6px;font-size:32px}
+    .modal p{margin:0 0 12px;line-height:1.45}
+    .close-btn{position:absolute;top:20px;right:20px;background:transparent;border:0;color:var(--soft);font-size:22px;cursor:pointer}
+
+    /* confetti canvas */
+    canvas.confetti{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1000}
+
+    /* responsive */
+    @media (max-width:900px){.wrap{grid-template-columns:1fr;}.right{order:2}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel left">
+      <h1>Birthday Gift Page for Afiya 🎂</h1>
+      <p class="lead">Enter a name (pre-filled) — click the ❤ button to open the gift and show the custom wish, advice & motivation.</p>
+
+      <div class="card">
+        <div class="input">
+          <input id="nameInput" type="text" value="Afiya" aria-label="Name">
+          <button id="openBtn">❤ Love</button>
+        </div>
+        <div class="note">প্রিভিউ — এটি আপনি সরাসরি কপি করে পাঠাতে পারবেন।</div>
+
+        <div class="preview" id="preview">
+          <div class="gift-title">Many many happy returns of the day, <span id="previewName">Afiya</span> 🎉</div>
+          <div class="gift-msg" id="previewMsg">জীবনে চলার পথে সকল বাধা কাটিয়ে সাফল্যের চূড়ায় পৌছাও সেই শুভকামনাই রইল।
+আমি জানি না তোমার পাশে থাকতে পারব কিনা বেশিদিন তবে আমার ছায়া সবসময়ই তোমার পিছু করবে।সেটা তোমার ইচ্ছায় হোক বা অনিচ্ছায়।ভালোবাসি কিনা এটা বলে বোঝানোর দরকার নেই। ভালোবাসা মন থেকে মনে যাওয়া আসার ব্যাপার। তাই সেটা তুমি ভালো করেই বুঝবে!জীবনে যেকোনো প্রয়োজনে ডেকো পাশে পাবে।</div>
+        </div>
+
+        <div style="margin-top:12px;font-size:13px;opacity:0.9">Tip: নাম পরিবর্তন করলে প্রিভিউ আপডেট হবে।</div>
+      </div>
+
+      <div style="margin-top:18px;color:rgba(255,255,255,0.85)">
+        <div style="font-weight:700">Instructions</div>
+        <ul style="opacity:0.9">
+          <li>যে কোনো ফোন/কম্পিউটারে এই ফাইল ওপেন করে দেখাবে।</li>
+          <li>হোস্ট করতে চাইলে Replit বা Netlify-এ আপলোড করলেই লিংক পাওয়া যাবে।</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="panel right">
+      <div>
+        <div class="small" style="font-weight:700">Quick Advice & Motivation</div>
+        <div class="small" style="margin-top:8px">জীবনের প্রতিটি বাধাই তোমাকে আরও শক্ত করে। বিশ্বাস রাখো — ধৈর্য্য ও পরিশ্রম থাকলে তুমি সফলতা পাবে। আমি তোমার পাশে আছি (চাইলে বা না চাইলে), তোমার ছায়া থাকবে।</div>
+      </div>
+
+      <div class="card small">
+        <div style="font-weight:700">Share</div>
+        <div style="margin-top:8px">এই HTML ফাইলটি সেভ করে তোমার বন্ধু বা নিজেই ওপেন করে দেখাতে পারো। Replit/Glitch-এ আপলোড করলে তুমি একটি শেয়ারেবল লিংক পাবে।</div>
+      </div>
+
+      <div class="card small">
+        <div style="font-weight:700">Customize</div>
+        <div style="margin-top:8px">তুমি চাইলে আমি এখানে আরও অ্যানিমেশন, মিউজিক, বা ছবি যোগ করে দিতে পারি — বললে আমি করে দেব।</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- overlay modal -->
+  <div id="overlay" class="overlay" role="dialog" aria-hidden="true">
+    <canvas class="confetti" id="confettiCanvas"></canvas>
+    <div class="modal">
+      <button class="close-btn" id="closeBtn">✕</button>
+      <h2 id="modalTitle">Many many returns of the day, Afiya 🎉</h2>
+      <p id="modalMsg">জীবনে চলার পথে সকল বাধা কাটিয়ে সাফল্যের চূড়ায় পৌছাও সেই শুভকামনাই রইল।
+আমি জানি না তোমার পাশে থাকতে পারব কিনা বেশদিন তবে আমার ছায়া সবসময়ই তোমার পিছু করবে।সেটা তোমার ইচ্ছায় হোক বা অনিচ্ছায়।ভালোবাসি কিনা এটা বলে বোঝানোর দরকার নেই। ভালোবাসা মন থেকে মনে যাওয়া আসার ব্যাপার। তাই সেটা তুমি ভালো করেই বুঝবে!জীবনে যেকোনো প্রয়োজনে ডেকো পাশে পাবে।</p>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button id="motivateBtn">Small Advice</button>
+        <button id="shareTextBtn">Copy Wish</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Elements
+    const nameInput = document.getElementById('nameInput');
+    const previewName = document.getElementById('previewName');
+    const previewMsg = document.getElementById('previewMsg');
+    const openBtn = document.getElementById('openBtn');
+    const overlay = document.getElementById('overlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMsg = document.getElementById('modalMsg');
+    const closeBtn = document.getElementById('closeBtn');
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    const motivateBtn = document.getElementById('motivateBtn');
+    const shareTextBtn = document.getElementById('shareTextBtn');
+
+    // Message (from user)
+    const customMessage = `জীবনে চলার পথে সকল বাধা কাটিয়ে সাফল্যের চূড়ায় পৌছাও সেই শুভকামনাই রইল।\nআমি জানি না তোমার পাশে থাকতে পারব কিনা বেশদিন তবে আমার ছায়া সবসময়ই তোমার পিছু করবে।সেটা তোমার ইচ্ছায় হোক বা অনিচ্ছায়।ভালোবাসি কিনা এটা বলে বোঝানোর দরকার নেই। ভালোবাসা মন থেকে মনে যাওয়া আসার ব্যাপার। তাই সেটা তুমি ভালো করেই বুঝবে!জীবনে যেকোনো প্রয়োজনে ডেকো পাশে পাবে।`;
+
+    // Update preview when name changes
+    function updatePreview(){
+      const n = nameInput.value.trim() || 'Afiya';
+      previewName.textContent = n;
+      previewMsg.textContent = customMessage;
+    }
+    nameInput.addEventListener('input', updatePreview);
+    updatePreview();
+
+    // Simple chime using Web Audio
+    function playChime(){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 520;
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(ctx.destination);
+        const now = ctx.currentTime;
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+        o.frequency.setValueAtTime(520, now);
+        o.frequency.exponentialRampToValueAtTime(720, now + 0.28);
+        o.start(now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+        o.stop(now + 1.45);
+      }catch(e){console.log('audio error',e)}
+    }
+
+    // Open modal
+    openBtn.addEventListener('click', ()=>{
+      const name = nameInput.value.trim() || 'Afiya';
+      modalTitle.textContent = `Many many returns of the day, ${name} 🎉`;
+      modalMsg.textContent = customMessage;
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      playChime();
+      launchConfetti();
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+    function closeModal(){ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); }
+
+    // Copy wish to clipboard
+    shareTextBtn.addEventListener('click', ()=>{
+      const text = `${modalTitle.textContent}\n\n${modalMsg.textContent}`;
+      navigator.clipboard.writeText(text).then(()=>{ alert('Wish copied to clipboard — এখন সেটি পেস্ট করে পাঠাতে পারো।'); }).catch(()=>{ alert('Copy failed — অনুগ্রহ করে ম্যানুয়ালি কপি করো।'); });
+    });
+
+    motivateBtn.addEventListener('click', ()=>{
+      alert('ছোট Advice:\n\nনিজেকে বিশ্বাস রাখো। প্রতিদিন ছোট ছোট কাজ করলে বড় পরিবর্তন আসে। তুমি পারবে — আমি তোমার পাশে আছি।');
+    });
+
+    // Simple confetti implementation
+    function launchConfetti(){
+      const canvas = confettiCanvas;
+      const ctx = canvas.getContext('2d');
+      let W = canvas.width = window.innerWidth;
+      let H = canvas.height = window.innerHeight;
+      const pieces = [];
+      const colors = ['#ff6b81','#ffd166','#06d6a0','#4cc9f0','#c77dff'];
+      for(let i=0;i<120;i++){
+        pieces.push({x:Math.random()*W,y:Math.random()*-H*0.6 + H/2 + Math.random()*20,r:Math.random()*6+4,dx:(Math.random()-0.5)*2,dy:Math.random()*3+2,color:colors[Math.floor(Math.random()*colors.length)],rot:Math.random()*360,vel:Math.random()*2+1});
+      }
+      let frame=0;
+      function update(){
+        ctx.clearRect(0,0,W,H);
+        for(let p of pieces){
+          p.x += p.dx;
+          p.y += p.dy;
+          p.rot += p.vel*2;
+          ctx.save();
+          ctx.translate(p.x,p.y);
+          ctx.rotate(p.rot*Math.PI/180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*1.8);
+          ctx.restore();
+        }
+        frame++;
+        if(frame>180){ cancelAnimationFrame(anim); ctx.clearRect(0,0,W,H); }
+        else anim = requestAnimationFrame(update);
+      }
+      let anim = requestAnimationFrame(update);
+      window.addEventListener('resize', ()=>{ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+    }
+  </script>
+</body>
+</html>
