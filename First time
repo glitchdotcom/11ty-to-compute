@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VR Mall Experience</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene vr-mode-ui="enabled: true" embedded>
+      <!-- Sky -->
+      <a-sky color="#ECECEC"></a-sky><!-- Floor -->
+  <a-plane rotation="-90 0 0" width="100" height="100" color="#ccc"></a-plane>
+
+  <!-- Mall Walls -->
+  <a-box position="0 1 -5" depth="10" height="3" width="0.2" color="#999"></a-box>
+  <a-box position="-5 1 0" depth="0.2" height="3" width="10" color="#999"></a-box>
+  <a-box position="5 1 0" depth="0.2" height="3" width="10" color="#999"></a-box>
+
+  <!-- Shop Display -->
+  <a-box position="0 1.3 -3" depth="0.5" height="2" width="3" color="#fff"></a-box>
+  <a-text value="VR Shop" color="#000" align="center" position="0 2 -3"></a-text>
+
+  <!-- Product -->
+  <a-box position="0 1 -3" depth="0.3" height="0.3" width="0.3" color="#4CC3D9"></a-box>
+  <a-text value="Product" color="#000" align="center" position="0 0.6 -3"></a-text>
+
+  <!-- Camera -->
+  <a-entity position="0 1.6 0">
+    <a-camera look-controls wasd-controls></a-camera>
+  </a-entity>
+</a-scene>
+
+  </body>
+</html>
