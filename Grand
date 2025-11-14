@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Games Leaderboard</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #111;
+        color: #eee;
+        margin: 0;
+        padding: 0;
+    }
+    header {
+        background-color: #1a73e8;
+        padding: 20px;
+        text-align: center;
+        color: #fff;
+    }
+    header h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+    header p {
+        margin: 5px 0 0;
+        font-size: 1rem;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 0 10px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #222;
+        margin-bottom: 30px;
