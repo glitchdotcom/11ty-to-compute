@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fiesta Random Extrema</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: fondoCambiante 3s infinite alternate;
+    }
+
+    @keyframes fondoCambiante {
+        0% { background: #ff004c; }
+        25% { background: #ff9d00; }
+        50% { background: #00c3ff; }
+        75% { background: #b700ff; }
+        100% { background: #00ff8a; }
+    }
+
+    .card {
+        background: rgba(255,255,255,0.2);
+        padding: 40px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        text-align: center;
+        color: white;
+        width: 350px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        animation: giroLocura 1.2s infinite alternate ease-in-out;
+    }
+
+    @keyframes giroLocura {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(3deg) scale(1.05); }
+        100% { transform: rotate(-3deg) scale(1.08); }
+    }
+
+    .resultado {
+        font-size: 36px;
+        font-weight: bold;
+        margin-top: 20px;
+        animation: saltitos 0.5s infinite alternate;
+    }
+
+    @keyframes saltitos {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-12px); }
+    }
+</style>
+</head>
+<body>
+
+<audio autoplay>
+  <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+</audio>
+
+<div class="card">
+    <h2>🎉 SORPRESA DE FIESTA 🎉</h2>
+
+<script>
+const bebidas = ["🍸 Vodka", "🥃 Tequila", "🍺 Cerveza", "🍹 Ron"];
+const botanas = ["🚬 Cigarros", "🍟 Papas", "🥜 Cacahuates", "🧀 Nachos con queso"];
+const total = bebidas.concat(botanas);
+
+let resultado = total[Math.floor(Math.random() * total.length)];
+
+document.write(`<div class="resultado">${resultado}</div>`);
+</script>
+
+</div>
+
+</body>
+</html>
