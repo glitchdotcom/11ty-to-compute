@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FireLegends Demo</title>
+<style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+<script>
+
+// ----- 3D Scene -----
+let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+// Camera
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0,2,5);
+
+// Renderer
+let renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Light
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+// Ground
+const groundGeo = new THREE.PlaneGeometry(20,20);
+const groundMat = new THREE.MeshStandardMaterial({color:0x228B22});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+// Faizan (Player)
+const playerGeo = new THREE.BoxGeometry(1,2,1);
+const playerMat = new THREE.MeshStandardMaterial({color:0x0000ff});
+let faizan = new THREE.Mesh(playerGeo, playerMat);
+faizan.position.y = 1;
+scene.add(faizan);
+
+// Enemy
+const enemyGeo = new THREE.BoxGeometry(1,2,1);
+const enemyMat = new THREE.MeshStandardMaterial({color:0xff0000});
+let enemy = new THREE.Mesh(enemyGeo, enemyMat);
+enemy.position.set(0,1,-8);
+scene.add(enemy);
+
+// GlowWall
+const wallGeo = new THREE.BoxGeometry(1,2,0.2);
+const wallMat = new THREE.MeshStandardMaterial({color:0xffff00});
+let glowWall = new THREE.Mesh(wallGeo, wallMat);
+glowWall.position.set(0,1,-4);
+scene.add(glowWall);
+
+// Controls
+let keys = {};
+document.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; });
+document.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+
+// Bullets
+let bullets = [];
+document.addEventListener('keydown', e=>{
+    if(e.key === ' ') shootBullet();
+});
+
+function shootBullet(){
+    const bulletGeo = new THREE.SphereGeometry(0.1,8,8);
+    const bulletMat = new THREE.MeshStandardMaterial({color:0xffff00});
+    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+    bullet.position.copy(faizan.position);
+    bullet.position.y += 1;
+    bullet.userData.direction = new THREE.Vector3(0,0,-1);
+    bullets.push(bullet);
+    scene.add(bullet);
+}
+
+// Animation loop
+function animate(){
+    requestAnimationFrame(animate);
+
+    // Move player
+    const step = 0.1;
+    if(keys['w']) faizan.position.z -= step;
+    if(keys['s']) faizan.position.z += step;
+    if(keys['a']) faizan.position.x -= step;
+    if(keys['d']) faizan.position.x += step;
+
+    // Camera follow
+    camera.position.x = faizan.position.x;
+    camera.position.z = faizan.position.z + 5;
+    camera.position.y = faizan.position.y + 2;
+    camera.lookAt(faizan.position);
+
+    // Move bullets
+    bullets.forEach((b,i)=>{
+        b.position.addScaledVector(b.userData.direction,0.3);
+
+        // Check hit enemy
+        if(b.position.distanceTo(enemy.position)<1){
+            scene.remove(enemy);
+            scene.remove(b);
+            bullets.splice(i,1);
+            alert("Enemy hit!");
+        }
+    });
+
+    renderer.render(scene, camera);
+}
+animate();
+
+</script>
+</body>
+</html>
