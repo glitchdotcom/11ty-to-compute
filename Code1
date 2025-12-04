@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moreno Family</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1f4d1f; /* deep green */
+      color: #ffffff; /* white text */
+    }
+    header {
+      background-color: #0f2a0f;
+      padding: 2rem;
+      text-align: center;
+      color: #ffffff;
+    }
+    h1, h2, h3, p {
+      color: #ffffff;
+    }
+    section {
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .image-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .image-gallery img {
+      width: 100%;
+      border-radius: 10px;
+      border: 2px solid #ffffff;
+    }
+    footer {
+      background-color: #0f2a0f;
+      padding: 1rem;
+      text-align: center;
+      color: #ffffff;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Moreno Family</h1>
+    <p>A Legacy of Heritage, Honor, and Tradition</p>
+  </header>
+
+  <section>
+    <h2>About the Moreno Family</h2>
+    <p>
+      The Moreno family stands among the most distinguished lineages, recognized for their cultural influence, historical significance, and refined societal presence. This website honors their legacy with elegance and depth.
+    </p>
+  </section>
+
+  <section>
+    <h2>3D Modeled Upper-Class Portraits</h2>
+    <p>
+      Below are visual placeholders for 3D artistic renderings of upper-class figures, styled with meticulous detail, dramatic lighting, and a sophisticated aesthetic.
+    </p>
+
+    <div class="image-gallery">
+      <img src="placeholder.jpg" alt="3D prompt: hyper-detailed 3D portrait of an aristocratic gentleman, photorealistic lighting, emerald accents, regal pose, ultra-detailed textures" />
+      <img src="placeholder.jpg" alt="3D prompt: elegant upper-class lady, baroque-inspired attire, soft volumetric lighting, highly detailed 3D rendering, refined expression" />
+      <img src="placeholder.jpg" alt="3D prompt: noble family group portrait, cinematic depth, intricate fabrics, lifelike 3D detailing, warm highlights" />
+    </div>
+  </section>
+
+  <section>
+    <h2>History & Legacy</h2>
+    <p>
+      For generations, the Moreno family has contributed to cultural, social, and intellectual endeavors, leaving a mark of sophistication and leadership.
+    </p>
+  </section>
+
+  <footer>
+    <p>© 2025 Moreno Family Heritage. All Rights Reserved.</p>
+  </footer>
+</body>
+</html>
