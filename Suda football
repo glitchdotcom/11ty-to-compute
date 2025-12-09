@@ -1,0 +1,36 @@
+import random
+
+# Game variables
+player_score = 0
+computer_score = 0
+
+while True:
+    # Player's turn
+    print("1. Shoot")
+    print("2. Pass")
+    print("3. Dribble")
+    action = input("Choose an action: ")
+    
+    # Computer's turn
+    computer_action = random.choice(["Shoot", "Pass", "Dribble"])
+    print(f"Computer chose: {computer_action}")
+    
+    # Determine outcome
+    if action == "1" and computer_action == "Shoot":
+        # Both shoot, random outcome
+        outcome = random.choice(["Goal", "Miss"])
+        if outcome == "Goal":
+            player_score += 1
+            print("You scored!")
+        else:
+            print("You missed!")
+    elif action == "1" and computer_action == "Pass":
+        # Player shoots, computer passes
+        player_score += 1
+        print("You scored!")
+    # Add more game logic here...
+    
+    print(f"Score - You: {player_score}, Computer: {computer_score}")
+    play_again = input("Play again? (y/n): ")
+    if play_again.lower() != "y":
+        break
