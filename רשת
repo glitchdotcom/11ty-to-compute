@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>רשתות חברתיות</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<style>
+body { font-family: Arial; margin: 0; padding: 0; background: #f2f2f2; }
+header { background: #6200ea; color: white; padding: 10px; text-align: center; }
+#channelSelect { margin: 10px; }
+#feed { padding: 10px; }
+.post { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+button { margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<header>
+<h1>רשתות חברתיות</h1>
+<button onclick="shareApp()">שתף את האפליקציה</button>
+</header>
+
+<select id="channelSelect" onchange="loadPosts()">
+<option value="">בחר ערוץ</option>
+</select>
+
+<div>
+<input type="text" id="postText" placeholder="כתוב משהו...">
+<input type="file" id="postMedia">
+<button onclick="addPost()">פרסם</button>
+</div>
+
+<div id="feed"></div>
+
+<script>
+// ------------------ Firebase Config ------------------
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// ------------------ פונקציות ------------------
+async function loadChannels() {
+  const channels = await db.collection('channels').get();
+  const select = document.getElementById('channelSelect');
+  select.innerHTML = '<option value="">בחר ערוץ</option>';
+  channels.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.data().name;
+    select.appendChild(opt);
+  });
+}
+
+async function loadPosts() {
+  const channelId = document.getElementById('channelSelect').value;
+  let query = db.collection('posts').orderBy('createdAt', 'desc');
+  if (channelId) query = query.where('channelId','==',channelId);
+  const snapshot = await query.get();
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const div = document.createElement('div');
+    div.className = 'post';
+    div.innerHTML = `
+      <strong>${data.user}</strong><br>
+      ${data.text || ''}<br>
+      ${data.media ? `<video src="${data.media}" controls width="100%"></video>` : ''}
+      <br><button onclick="likePost('${doc.id}')">לייק (${data.likes||0})</button>
+      <br>תגובות: ${data.comments ? data.comments.join(', ') : ''}
+    `;
+    feed.appendChild(div);
+  });
+}
+
+async function addPost() {
+  const text = document.getElementById('postText').value;
+  const file = document.getElementById('postMedia').files[0];
+  const channelId = document.getElementById('channelSelect').value || '';
+  let mediaUrl = '';
+  if (file) {
+    const ref = storage.ref('posts/'+Date.now()+'_'+file.name);
+    await ref.put(file);
+    mediaUrl = await ref.getDownloadURL();
+  }
+  await db.collection('posts').add({
+    user: 'משתמש דוגמה',
+    text,
+    media: mediaUrl,
+    channelId,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    likes: 0,
+    comments: []
+  });
+  document.getElementById('postText').value = '';
+  document.getElementById('postMedia').value = '';
+  loadPosts();
+}
+
+async function likePost(postId) {
+  const postRef = db.collection('posts').doc(postId);
+  await postRef.update({
+    likes: firebase.firestore.FieldValue.increment(1)
+  });
+  loadPosts();
+}
+
+function shareApp() {
+  const link = window.location.href;
+  navigator.clipboard.writeText(link).then(()=> alert("הקישור הועתק!"))
+  .catch(()=> alert("לא הצלחנו להעתיק את הקישור."));
+}
+
+// ------------------ אתחול ------------------
+loadChannels();
+loadPosts();
+</script>
+</body>
+</html>
