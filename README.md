@@ -21,7 +21,7 @@ This project is powered by [Eleventy](https://www.11ty.dev/), a lightweight stat
 
 ## Fork your own blog
 
-**Fork** [this repository](https://github.com/glitchdotcom/11ty-to-compute/) to create your own copy of the site.
+**Fork** [this repository](https://github.com/fastly/11ty-to-compute/) to create your own copy of the site.
 
 In your fork, open the site in a codespace by clicking **Code** > **Codespaces** and creating a new codespace on your main branch. 
 
