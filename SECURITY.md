@@ -6,8 +6,7 @@ issues should be reported privately via [Fastly’s security issue reporting pro
 ## Security advisories
 
 Remediation of security vulnerabilities is prioritized by the project team. The project team endeavors to coordinate
-remediation with third-party stakeholders, and is committed to transparency in the disclosure process. The team announces
-security issues via [GitHub](https://github.com/glitchdotcom/11ty-to-compute/releases) on a best-effort basis.
+remediation with third-party stakeholders, and is committed to transparency in the disclosure process. The team announces security issues via [GitHub](https://github.com/fastly/11ty-to-compute/releases) on a best-effort basis.
 
 Note that communications related to security issues in Fastly-maintained OSS as described here are distinct from
 [Fastly Security Advisories](https://www.fastly.com/security-advisories).
